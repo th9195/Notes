@@ -127,6 +127,12 @@ print(msg)
 ## 7- 输出到文件
 
 ``` python
-file = open()
+strFile = "写入文件中"
+fileFp = open("file.txt","a+")
+print(strFile,file = fileFp)
+fileFp.close()
+
+结果：
+	创建一个file.txt 文件，并将“写入文件中” 写入file.txt 
 ```
 
