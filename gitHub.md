@@ -2,11 +2,15 @@
 
 https://github.com/th270?tab=repositories
 
-1. new
+1. new repositories
 
 ![截屏2020-09-02 下午7.12.49](/Users/tanghui/Desktop/截屏2020-09-02 下午7.12.49.png)
 
-2. ![截屏2020-09-02 下午7.14.05](/Users/tanghui/Desktop/截屏2020-09-02 下午7.14.05.png)
+
+
+2. 填写 repository name 和 Description
+
+   ![截屏2020-09-02 下午7.14.05](/Users/tanghui/Desktop/截屏2020-09-02 下午7.14.05.png)
 
 
 
