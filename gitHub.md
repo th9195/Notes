@@ -1,14 +1,44 @@
+## 1- 创建仓库
+
+https://github.com/th270?tab=repositories
+
+1. new
+
+![截屏2020-09-02 下午7.12.49](/Users/tanghui/Desktop/截屏2020-09-02 下午7.12.49.png)
+
+2. ![截屏2020-09-02 下午7.14.05](/Users/tanghui/Desktop/截屏2020-09-02 下午7.14.05.png)
 
 
 
+3. 获取给仓库的url
+   1. https://github.com/th270/Notes.git
 
 
 
+## 在本地选中一个目录执行以下命令
+
+``` python
+echo "# Notes" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M master
+git remote add origin https://github.com/th270/Notes.git
+git push -u origin master
+```
 
 
 
+## 克隆 clone
 
-## 更新代码
+``` python
+git clone https://github.com/th270/Notes.git
+
+```
+
+
+
+## 更新本地代码
 
 git pull 
 
