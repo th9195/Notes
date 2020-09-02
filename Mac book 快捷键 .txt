@@ -1,0 +1,102 @@
+Mac book 快捷键 
+
+
+1- 快速删除某个软件
+	在启动台长按 option 键 ，就会显示删除方法；
+
+2- 强制退出应用
+	a- Command + Option + Esc ;
+	b- Command + 空格  输入“活动” 打开活动监视器，将需要退出的进程关闭；
+	c- 在dock栏右键需要强制退出的应用 再option键 即可选择强制退出；
+
+3- 更改某个文件永久的打开方式
+	a- 选中文件 command + i  可以选择打开方式
+	b- 选中文件 右键 + option  
+
+4- 现在扩展名
+	选中文件 command + i 可以看到扩展名
+
+5- 获取当前文件夹的绝对路径
+	选中文件夹 右键 + option   选择 将“xxxx”拷贝为路径名称
+
+6- 全屏预览图片
+	a- 选中图片，空格键  可以预览图片
+	b- 选中图片，按着option 键 + 空格 可以全屏 预览图片
+
+7- 剪切功能
+	a- command + c  复制  ；  command + option + v 剪切
+
+8- 查看多个文件大小
+	a- 选中一个文件夹 空格 可以先行文件夹的大小
+	b- 选中多个文件 command + option + i 
+
+9- 截图 （图片默认保存在桌面）
+	command + shift + 3 全屏截图
+	command + shift + 4 部分截图
+
+10- 打开文件/文件夹
+	command + o 	
+
+11- 向后删除：
+	fn + delete
+
+12- 隐藏最前面应用的窗口
+	command + h 
+
+13- 窗口最小化
+	command + m 
+
+14- 关闭当前窗口
+	command + w 
+
+14 - 退出
+	command + Q	
+
+14 - 新建
+	command + n 
+
+14- 删除文件
+	command + delete
+
+14- 清空回收站
+	command + shift + delete 	
+
+14- 显示影藏文件
+	shift+cmmand+.  
+
+
+
+
+15- 到行首
+	ctrl + a 
+
+16- 到行尾
+	ctrl + e 
+
+17- 从光标处开始删除，直到行尾
+	ctrl + k 
+
+18- page up/down 
+	fn + 上方向键/下方向键
+
+
+
+
+
+19- 浏览器
+19-1 放大/缩小
+	command + "+/-"
+
+19-2 新建一个选项卡
+	command + t
+
+19-3 新建一个新窗口
+	command + n 
+
+19-4 刷新
+	command + r 
+
+19-5 搜索
+	command + f 
+
+19-6 关闭当前选项卡
