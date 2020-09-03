@@ -94,3 +94,74 @@ for i in range(1,10):
     print()
 ```
 
+
+
+## 5- 逢7拍大腿游戏
+
+``` python
+
+'''
+ 逢 7 拍腿游戏
+ 只要是 7 的倍数 或者 7结尾
+
+'''
+
+
+l1 = list()
+
+for i in range(-22,100):
+    if i % 7 == 0 or str(i).endswith("7") > 0 :
+        l1.append(i)
+        continue
+
+
+print(len(l1))
+print(l1)
+
+结果：
+  27
+  [-21, -17, -14, -7, 0, 7, 14, 17, 21, 27, 28, 35, 37, 42, 47, 49, 56, 57, 63, 67, 70, 77, 84, 87, 91, 97, 98]
+
+```
+
+
+
+## 6- 猜数字游戏
+
+``` python
+'''
+猜数字游戏
+'''
+
+
+min_number = 0
+max_number = 100
+thunder_number = 0
+
+guess_number = 0
+
+
+thunder_number = int(input("请输入雷数字:"))
+while True:
+    guess_number = int(input("请输入您猜的数字:"))
+
+    #判断您说的数字是否有效
+    if guess_number > max_number or guess_number < min_number:
+        print("您说的数字无效，请重试！%d 到 %d" % (min_number,max_number))
+        continue
+    else:
+        #判断是否猜中
+        if thunder_number == guess_number:
+            print("恭喜您猜中！游戏结束")
+            break
+        else:
+            #如果没有猜中重新设置范围
+            if guess_number > thunder_number:
+                max_number = guess_number
+            elif guess_number < thunder_number:
+                min_number = guess_number
+            print("您没有猜中，游戏继续，{}到{}".format(min_number,max_number))
+```
+
+
+
