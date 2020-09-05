@@ -29,7 +29,7 @@ print("name = %s ;age = %s" %(name,age))
 
 
 
-## 3- 格式化输出
+## 3- 格式化输出 format    和  f 
 
 ``` python
 name = "Tom"
@@ -43,6 +43,13 @@ print("age = {1} ;name = {0}".format(name,age))
 	name = Tom ;age = 29
 	name = Tom ;age = 29
 	age = 29 ;name = Tom
+```
+
+``` python
+name = "Tom"
+age = 29
+
+print(f"name = {name} ;age = {age}")
 ```
 
 
