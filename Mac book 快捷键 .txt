@@ -61,9 +61,8 @@ Mac book 快捷键 
 14- 清空回收站
 	command + shift + delete 	
 
-14- 显示影藏文件
+14- 显示隐藏文件
 	shift+cmmand+.  
-
 
 
 
@@ -100,3 +99,18 @@ Mac book 快捷键 
 	command + f 
 
 19-6 关闭当前选项卡
+
+
+
+
+
+20-环境变量配置
+
+~/.bash_profile文件
+
+修改完后： 
+
+```bash
+source ~/.bash_profile
+```
+
