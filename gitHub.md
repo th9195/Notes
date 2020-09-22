@@ -1,6 +1,6 @@
 ## 1- 创建仓库
 
-https://github.com/th270?tab=repositories
+https://github.com/th9195?tab=repositories
 
 1. new repositories
 
@@ -15,7 +15,7 @@ https://github.com/th270?tab=repositories
 
 
 3. 获取给仓库的url
-   1. https://github.com/th270/Notes.git
+   1. https://github.com/th9195/Notes.git
 
 
 
@@ -36,7 +36,7 @@ git push -u origin master
 ## 克隆 clone
 
 ``` python
-git clone https://github.com/th270/Notes.git
+git clone https://github.com/th9195/Notes.git
 
 ```
 
