@@ -60,6 +60,12 @@ git push origin master
 
 
 
+注意： 每次提交代码的时候需要先 git pull ,  再 git push.
+
+
+
+
+
 
 
 
