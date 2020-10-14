@@ -4,7 +4,11 @@ import os
 sec="t95p0q2f6dz1cxmowgjensr7yh384bvualki"
 dec="dn7vhlk3wx1efsyc56zu2bomjtq8i0g4rp9a"
 c = wmi.WMI()
+
+
+######################################获取硬盘序列号##########################################
 for physical_disk in c.Win32_DiskDrive():
+    print("硬盘 : ",type(physical_disk))
     hard_seral=physical_disk.SerialNumber   # 获取硬盘序列号
     print("硬盘序列号为：",hard_seral)
 if len(hard_seral)>6:
@@ -12,7 +16,12 @@ if len(hard_seral)>6:
 else:
     print("硬盘信息获取错误！")
     os.exit(0)
+print("hard_seral==",hard_seral)
+   
+   
+######################################获取CPU序列号##########################################
 for cpu in c.Win32_Processor():
+    print("CPU : ",type(cpu))
     cpu_seral=cpu.ProcessorId.strip()     # 获取CPU序列号
     print("CPU序列号为：",cpu_seral)    
 if len(cpu_seral)>4:
@@ -20,9 +29,15 @@ if len(cpu_seral)>4:
 else:
     print("CPU信息获取错误！")
     os.exit(0)
+
+print("cpu_seral == ", cpu_seral)    
+    
+######################################获取主板序列号##########################################
 for board_id in c.Win32_BaseBoard():
+    print("主板 : ",type(board_id))
     board_id=board_id.SerialNumber        # 获取主板序列号
     print("主板序列号为：",board_id)    
+    print("board_id len == ",len(board_id))
 if len(board_id)>6:
     board_id=board_id[-5:]
 else:
@@ -45,8 +60,11 @@ rand_seral=''.join(list_seral) +rand_seral   # 形成25位的字符串
 low_seral=""
 rand_seral=rand_seral.lower()
 for item in rand_seral:
-    j=sec.index(item)
-    low_seral+=dec[j]
+    item.strip(" ")
+  
+    if len(item) > 0 and item.isnumeric():
+        j=sec.index(item)
+        low_seral+=dec[j]
 low_seral=low_seral.upper()    
 last_seral=low_seral[0:5]+"-"+low_seral[5:10]+"-"+low_seral[10:15]+"-"+low_seral[15:20]+"-"+low_seral[20:25]
 print("生成的注册码为：\n",last_seral)
