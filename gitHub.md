@@ -56,6 +56,8 @@ git commit -m "添加注释"
 
 git push origin master
 
+or git push   (后期可以直接使用这个即可)
+
 
 
 
