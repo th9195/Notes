@@ -150,7 +150,7 @@ if __name__ == '__main__':
         else:
             print("完成！")
             break
-        finally:
+        finally:  # finally 是一定会执行的
             print(f"第{count}次分苹果")
 结果：
   请输入苹果的个数:20.3
