@@ -6,7 +6,13 @@ dec="dn7vhlk3wx1efsyc56zu2bomjtq8i0g4rp9a"
 
 c = wmi.WMI()
 
+<<<<<<< HEAD
+
+######################################获取硬盘序列号##########################################
+=======
+>>>>>>> f76c4a9a95bad084a789e05c665dc7f06f4ace86
 for physical_disk in c.Win32_DiskDrive():
+    print("硬盘 : ",type(physical_disk))
     hard_seral=physical_disk.SerialNumber   # 获取硬盘序列号
     print("硬盘序列号为：",hard_seral)
 
@@ -15,8 +21,16 @@ if len(hard_seral)>6:
 else:
     print("硬盘信息获取错误！")
     os.exit(0)
+<<<<<<< HEAD
+print("hard_seral==",hard_seral)
+   
+   
+######################################获取CPU序列号##########################################
+=======
 
+>>>>>>> f76c4a9a95bad084a789e05c665dc7f06f4ace86
 for cpu in c.Win32_Processor():
+    print("CPU : ",type(cpu))
     cpu_seral=cpu.ProcessorId.strip()     # 获取CPU序列号
     print("CPU序列号为：",cpu_seral)    
 
@@ -26,11 +40,22 @@ else:
     print("CPU信息获取错误！")
     os.exit(0)
 
+<<<<<<< HEAD
+print("cpu_seral == ", cpu_seral)    
+    
+######################################获取主板序列号##########################################
+=======
 
+>>>>>>> f76c4a9a95bad084a789e05c665dc7f06f4ace86
 for board_id in c.Win32_BaseBoard():
+    print("主板 : ",type(board_id))
     board_id=board_id.SerialNumber        # 获取主板序列号
     print("主板序列号为：",board_id)    
+<<<<<<< HEAD
+    print("board_id len == ",len(board_id))
+=======
 
+>>>>>>> f76c4a9a95bad084a789e05c665dc7f06f4ace86
 if len(board_id)>6:
     board_id=board_id[-5:]
 else:
@@ -64,9 +89,17 @@ low_seral=""
 rand_seral=rand_seral.lower()
 
 for item in rand_seral:
+<<<<<<< HEAD
+    item.strip(" ")
+  
+    if len(item) > 0 and item.isnumeric():
+        j=sec.index(item)
+        low_seral+=dec[j]
+=======
     j=sec.index(item)
     low_seral+=dec[j]
 
+>>>>>>> f76c4a9a95bad084a789e05c665dc7f06f4ace86
 low_seral=low_seral.upper()    
 
 last_seral=low_seral[0:5]+"-"+low_seral[5:10]+"-"+low_seral[10:15]+"-"+low_seral[15:20]+"-"+low_seral[20:25]
