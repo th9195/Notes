@@ -72,6 +72,35 @@ or git push   (后期可以直接使用这个即可)OK
 
 
 
+​	git pull的时候发生冲突的解决方法之“error: Your local changes to the following files would be overwritten by merge”
+
+###  方法二、放弃本地修改，直接覆盖
+
+```
+1 git reset --hard
+2 git pull
+```
+
+
+
+
+
+如果希望保留生产服务器上所做的改动,仅仅并入新配置项, 处理方法如下:
+
+git stash
+git pull
+git stash pop
+然后可以使用git diff -w +文件名 来确认代码自动合并的情况.
+
+
+
+
+
+反过来,如果希望用代码库中的文件完全覆盖本地工作版本. 方法如下:
+git reset --hard
+git pull
+其中git reset是针对版本,如果想针对文件回退本地修改,使用
+
 
 
 
