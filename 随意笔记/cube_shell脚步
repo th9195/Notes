@@ -1,0 +1,114 @@
+
+
+
+
+## Trunk
+
+svn: svn://fhbbssvn2.fiberhome.com:3702/project/2019405_AIR1201-D01/trunk
+
+
+
+shell 脚步 AIR1201-D01_IOT:
+
+FH_AIBS_ORITGZ=(
+/opt/MT8167S-AIR1201-D01/MTK8167s_origin_20190424.tar.gz
+)
+
+
+
+
+
+
+
+
+
+## Branch
+
+
+
+svn: svn://fhbbssvn2.fiberhome.com:3702/project/2019405_AIR1201-D01/branches/brn_duotel_dev
+
+
+
+shell 脚步 AIR1201-D01_IOT:
+
+FH_AIBS_ORITGZ=(
+/media/new/MTK8167s_origin_20190424.tar.gz
+)
+
+
+
+
+
+## 抓日志
+
+​	SmartBuild中的 ./AI_Build_mtk.sh aiv8167sm3_bsp AIR1201-D01_IOT AIR1201-D01_IOT 1 0 eng  第四个参数把1 改为0，可不删除源码目录，只更新服务器上代码。以加快编译速度。
+
+​	附件的AI_Build_mtk_optimize.sh 同理，并增加了如下三个控制位。可根据自己需要开关。里面配置了所有路径下的权限。
+
+``` python
+###调试用快速编译控制项begin####
+QUICK_BUILD_UPDATE="true"  ###为false时，不会从svn服务器更新代码###
+COMPLE_NDK="false"   ###为false时，不会编译zigbee部分###
+COMPLE_ZIP="false"  ##true代表编译update.zip升级包##
+
+```
+
+
+
+## 拷贝日志脚步   pulllog.bat
+
+``` python
+
+adb root
+adb remount
+
+@echo off
+set d=%date:~0,4%-%date:~5,2%-%date:~8,2%
+set hour=%time:~,2%
+set min_sec=%time:~3,2%-%time:~6,2%
+if "%time:~,1%"==" " set hour=0%time:~1,1%
+set t=%hour%-%min_sec%
+
+@echo on
+set FOLDER=%d%_%t%
+
+mkdir %FOLDER%
+
+adb pull /cache/recovery/ %FOLDER%/
+adb pull /data/anr/ %FOLDER%/
+adb pull /data/tombstones/ %FOLDER%/
+adb pull /sdcard/mtklog/ %FOLDER%/
+::adb logcat -G 20m
+::adb logcat > %FOLDER%/logcat.log
+
+@echo off
+set /p DEL_LOG="Delete /sdcard/mtklog/  log? (y/n .Default is n)"
+
+if not defined DEL_LOG set DEL_LOG=n
+
+if %DEL_LOG% neq y GOTO SKIP_DEL_MTKLOG
+if %DEL_LOG%==y GOTO DEL_MTKLOG
+
+:DEL_MTKLOG
+    echo "start delete /sdcard/mtklog/"
+    adb shell rm -rf /sdcard/mtklog/*
+
+:SKIP_DEL_MTKLOG
+    
+
+echo "THIS"
+pause
+
+```
+
+
+
+
+
+
+
+
+
+
+
