@@ -1,1 +1,2 @@
-本实例在IDLE和Pycharm下测试通过
+鏈疄渚嬪湪IDLE鍜孭ycharm涓嬫祴璇曢�氳繃
+
