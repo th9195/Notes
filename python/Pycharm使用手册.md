@@ -125,3 +125,27 @@ $var3$       变量3，tab切换时，光标会在该处停留
 
 
 
+
+
+### 使用豆瓣源下载
+
+pip install -i https://pypi.doubanio.com/simple/  --trusted-host pypi.doubanio.com wxpython
+
+
+
+### 升级
+
+python -m pip install --upgrade pip
+
+
+
+
+
+
+
+
+
+
+
+
+
