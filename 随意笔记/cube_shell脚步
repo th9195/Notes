@@ -42,6 +42,20 @@ FH_AIBS_ORITGZ=(
 
 ## 抓日志
 
+
+
+adb logcat -vtime>C:\Users\Turtle\Desktop\micbasex\log.txt
+
+
+
+
+
+
+
+## 拉SVN 上的代码
+
+
+
 ​	SmartBuild中的 ./AI_Build_mtk.sh aiv8167sm3_bsp AIR1201-D01_IOT AIR1201-D01_IOT 1 0 eng  第四个参数把1 改为0，可不删除源码目录，只更新服务器上代码。以加快编译速度。
 
 ​	附件的AI_Build_mtk_optimize.sh 同理，并增加了如下三个控制位。可根据自己需要开关。里面配置了所有路径下的权限。
@@ -106,9 +120,91 @@ pause
 
 
 
+##  查看内存free -h
+
+​	
+
+aiv8167sm3_bsp:/ # free -h 
+free -h
+                		total        used       		free      shared     buffers
+Mem:             978M        938M        	 40M        1.6M         21M
+-/+ buffers/cache:          917M             61M
+Swap:            733M         28M        	   706M
 
 
 
+##  查看app 占用内存大小dumpsys meminfo
+
+
+aiv8167sm3_bsp:/ # dumpsys meminfo
+dumpsys meminfo
+Applications Memory Usage (in Kilobytes):
+Uptime: 74470789 Realtime: 74470789
+
+Total PSS by process:
+     75,571K: com.fiberhome.duotel (pid 1349 / activities)
+     62,623K: com.android.systemui (pid 819)
+     59,258K: com.azero.sampleapp (pid 1288)
+     55,310K: system (pid 663)
+     32,491K: com.android.settings (pid 965)
+     28,604K: com.fiberhome.bluetoothplayer (pid 1557)
+     25,194K: zygote (pid 508)
+     24,864K: surfaceflinger (pid 261)
+     15,296K: com.android.bluetooth (pid 1162)
+     10,548K: android.process.media (pid 1225)
+      9,828K: camerahalserver (pid 528)
+      9,646K: com.fiberhome.iothub (pid 1863)
+      8,847K: android.hardware.audio@2.0-service-mediatek (pid 246)
+
+
+
+## 手动启动某个apk
+
+1. **azero apk**
+   - adb shell am start com.azero.sampleapp/.activity.launcher.LauncherActivity
+2. **原生界面**
+   - adb shell am start com.android.settings/com.android.settings.Settings
+
+​		
+
+
+
+## azero 平台账号
+
+		13126895527  Duotel@123   多彩账号
+		https://azero.soundai.com/iot/
+		
+		Azero IoT开放平台
+
+
+​		
+		https://doc-iot-azero.soundai.cn/
+		
+		声智账号： 15327329617	wang0317   账号
+https://azero.soundai.com/   官网
+
+
+https://azero.soundai.com/ask/home
+
+
+15327329617	wang0317   账号
+
+
+多彩账号
+		13126895527  Duotel@123   
+
+		duotelCube
+		5ee6c0f998bee7000ab273fd
+		57a811313f05709f9e1cb66f2ff4052f
+
+https://github.com/sai-azero/Azero_SDK_for_Android  github
+
+下面的是我们技能相关的示例和文档
+skill 文档: https://github.com/sai-azero/azero-skills-readme
+python 文档: https://github.com/sai-azero/azero-skills-kit-sdk-for-python
+nodejs 文档: https://github.com/sai-azero/azero-skills-kit-sdk-for-nodejs
+nodejs 示例: https://github.com/sai-azero/azero-skills-kit-sdk-for-nodejs
+java 示例: https://github.com/sai-azero/skill-sample-java-hello-world
 
 
 
