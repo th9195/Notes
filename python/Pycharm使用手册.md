@@ -96,7 +96,22 @@ for $INDEX$ in $var1$($num$):
 
 
 
-### 
+### 定义一个类
+
+``` python
+class $NAME$($var1$):
+    """
+    参数：$var1$
+    功能：$var2$
+    作者：$USER$
+    时间：$DATE$ $TIME$
+    """
+    def __init__(self):
+    	pass  
+    
+```
+
+
 
 
 
@@ -131,11 +146,53 @@ $var3$       变量3，tab切换时，光标会在该处停留
 
 pip install -i https://pypi.doubanio.com/simple/  --trusted-host pypi.doubanio.com wxpython
 
-
+pip install -i https://pypi.doubanio.com/simple/  --trusted-host pypi.doubanio.com wxpython
 
 ### 升级
 
-python -m pip install --upgrade pip
+python -m pip install --upgrade **需要升级的包名**
+
+
+
+
+
+## 安装下载下来的源码
+
+https://www.crummy.com/software/BeautifulSoup/bs4/download/
+
+python setup.py install
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
