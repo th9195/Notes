@@ -178,8 +178,8 @@ Total PSS by process:
 
 
 ​		
-		https://doc-iot-azero.soundai.cn/
-		
+​		https://doc-iot-azero.soundai.cn/
+​		
 		声智账号： 15327329617	wang0317   账号
 https://azero.soundai.com/   官网
 
@@ -204,6 +204,20 @@ python 文档: https://github.com/sai-azero/azero-skills-kit-sdk-for-python
 nodejs 文档: https://github.com/sai-azero/azero-skills-kit-sdk-for-nodejs
 nodejs 示例: https://github.com/sai-azero/azero-skills-kit-sdk-for-nodejs
 java 示例: https://github.com/sai-azero/skill-sample-java-hello-world
+
+
+
+
+
+## cube 版本获取
+
+  FTP服务器：10.96.163.11 
+
+  端口号：24 
+  账号和密码：public/public 
+  路径 ：/JenkinsTemp/SmartHome/AIR1201-D01/AIR1201-D01_IOT-IOT-MTO-AI04-FH-V4.0-202010300932-V100R003.01
+
+
 
 
 
