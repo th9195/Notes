@@ -235,3 +235,22 @@ ssh htang103_60026@10.96.163.150
 
 密码：htang103_60026
 
+
+
+
+
+## RJ11测试环境搭建
+
+
+
+admin 
+
+admin
+
+网络》语音配置》基本参数
+
+ifconfig br0 192.168.1.10
+
+ifconfig veip0.0 1.2.3.4
+
+sip server 192.168.1.108
