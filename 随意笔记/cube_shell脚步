@@ -180,7 +180,7 @@ Total PSS by process:
 ​		
 ​		https://doc-iot-azero.soundai.cn/
 ​		
-		声智账号： 15327329617	wang0317   账号
+​		声智账号： 15327329617	wang0317   账号
 https://azero.soundai.com/   官网
 
 
@@ -220,4 +220,18 @@ java 示例: https://github.com/sai-azero/skill-sample-java-hello-world
 
 
 
+
+## MAC  连接171 或150 服务器
+
+
+
+ssh tanghui@10.96.163.171
+
+密码：tanghui
+
+
+
+ssh htang103_60026@10.96.163.150     
+
+密码：htang103_60026
 
