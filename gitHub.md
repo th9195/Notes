@@ -84,7 +84,7 @@ or git push   (后期可以直接使用这个即可)OK
 
 ​	git pull的时候发生冲突的解决方法之“error: Your local changes to the following files would be overwritten by merge”
 
-###  方法二、放弃本地修改，直接覆盖
+##  方法二、放弃本地修改，直接覆盖
 
 ```
 1 git reset --hard
@@ -112,6 +112,78 @@ git pull
 其中git reset是针对版本,如果想针对文件回退本地修改,使用
 
 
+
+
+
+
+
+## 创建一个文件
+
+``` python
+
+mkdir day01
+touch day01/readme.md
+
+git add day01/readme.md
+
+git commit -m "add new file"
+git push origin master
+
+例如：
+(base) tanghuideMacBook-Pro:java tanghui$ mkdir day01
+(base) tanghuideMacBook-Pro:java tanghui$ touch day01/readme.md
+(base) tanghuideMacBook-Pro:java tanghui$ 
+(base) tanghuideMacBook-Pro:java tanghui$ 
+(base) tanghuideMacBook-Pro:java tanghui$ git add day01/readme.md
+(base) tanghuideMacBook-Pro:java tanghui$ git commit -m "add new files"
+[master e8f9a8f] add new files
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 java/day01/readme.md
+(base) tanghuideMacBook-Pro:java tanghui$ git push origin master
+Enumerating objects: 7, done.
+Counting objects: 100% (7/7), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (5/5), 368 bytes | 368.00 KiB/s, done.
+Total 5 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/th9195/Notes.git
+   db3173c..e8f9a8f  master -> master
+(base) tanghuideMacBook-Pro:java tanghui$ 
+```
+
+
+
+
+
+## 删除一个文件
+
+``` python
+rm day01/readme.md
+git commit -m remove day01/readme.md
+git push origin master
+git push origin master
+
+
+----------------------------------------------------
+例如：
+(base) tanghuideMacBook-Pro:java tanghui$ rm day01/readme.md 
+(base) tanghuideMacBook-Pro:java tanghui$ git commit -m remove day01/readme.md
+[master c215fee] remove
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ delete mode 100644 java/day01/readme.md
+(base) tanghuideMacBook-Pro:java tanghui$ git push origin master
+Enumerating objects: 5, done.
+Counting objects: 100% (5/5), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (3/3), 280 bytes | 280.00 KiB/s, done.
+Total 3 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/th9195/Notes.git
+   e8f9a8f..c215fee  master -> master
+(base) tanghuideMacBook-Pro:java tanghui$ 
+```
 
 
 
