@@ -1,0 +1,31 @@
+在网上搜集的10套人工智能相关的课程分享给大家：
+
+1、深度学习与Tensorflow2实战
+下载地址：https://pan.baidu.com/s/1M3YM4nSgLEvpDLt9GdGtNg 提取码: 5tdm
+
+2、推荐系统实战系列(Python版，2020年9月新课)
+下载地址：https://pan.baidu.com/s/1iYN5AArGvtmS9L0-lCUZUw 提取码: 5rt2
+
+3、强化学习实战系列（2020最新）
+下载地址：https://pan.baidu.com/s/1uzVWCPOLcmdPBiR-rzRu1w 提取码: w2za
+
+4、深度学习-PyTorch框架实战系列
+下载地址：https://pan.baidu.com/s/1xU_Ufnl3R_hTZxunlPJCZQ 提取码: 3w9n
+
+5、自然语言处理动手学Bert文本分类
+下载地址：https://pan.baidu.com/s/1U8lr7XI4GlJsAugmFo7Hxg 提取码: 4cpx
+
+6、知识图谱实战系列(Python版)
+下载地址：https://pan.baidu.com/s/1B0OQ6Q5gqPaA5srZlC05pg 提取码: af7y
+
+7、Pytorch入门到进阶 实战计算机视觉与自然语言处理项目
+下载地址：https://pan.baidu.com/s/1mgSLZMxWYvc7Zm3nux6ogQ 提取码: ng8g
+
+8、Tensorflow深度学习入门与实战（全新2.0版本）
+下载地址：https://pan.baidu.com/s/152wTwJJbCf_A0o7leGOfCQ 提取码: pq3p
+
+9、GAN生成对抗网络入门与实战
+下载地址：https://pan.baidu.com/s/1tPDsYJ0QHxRNrck9L2nyww 提取码: u5w7
+
+10、Keras深度学习入门与实战
+下载地址：https://pan.baidu.com/s/1d-hLpLbHEXL9GGWVhltHRA 提取码: b9sv
