@@ -254,3 +254,25 @@ ifconfig br0 192.168.1.10
 ifconfig veip0.0 1.2.3.4
 
 sip server 192.168.1.108
+
+
+
+
+
+# Duotel
+
+
+
+## duotel 开发文档账号：
+
+fiberhome@duotel.cn
+
+123456
+
+
+
+## duotel 配置账号：
+
+wangshihan@duotel.cn
+
+duotel@123
