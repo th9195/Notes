@@ -194,3 +194,117 @@ To https://github.com/th9195/Notes.git
 
 
 
+
+
+
+
+## 新电脑怎么使用git 
+
+1- 下载git 默认安装即可；
+
+2- 配置用户名邮箱
+
+``` sql
+git config --global user.name  "th9195"  
+git config --global user.email  "tanghui20_10@163.com"
+
+在用户下查看：
+C:\Users\tanghui\.gitconfig 文件
+[user]
+	email = tanghui20_10@163.com
+	name = th9195
+```
+
+
+
+3- 配置ssh
+
+``` sql
+ ssh-keygen -t rsa -C "tanghui20_10@163.com"
+ 
+ C:\Users\tanghui\.ssh\目录下，看看有没有.ssh目录，如果有，再看看这个目录下有没有id_rsa和id_rsa.pub这两个文件
+ id_rsa 是私钥，不能泄露出去;
+ id_rsa.pub是公钥
+ 
+```
+
+
+
+4- 登陆GitHub，打开 头像-> settings->SSH and GPG keys，“SSH Keys”页面：
+
+然后，点“New SSH Key”，填上任意Title，在Key文本框里粘贴id_rsa.pub文件的内容：
+
+
+
+5- 去你的仓库copy SSH url 
+
+```sql
+git@github.com:th9195/Notes.git
+```
+
+
+
+6- 在新电脑上克隆
+
+``` sql
+git clone git@github.com:th9195/Notes.git
+```
+
+
+
+
+
+
+
+## 创建分支
+
+### 1- 创建
+$ git branch newbranch
+然后输入这条命令检查是否创建成功
+
+
+
+### 2- 查看
+$ git branch
+这时终端输出
+
+ newbranch
+\* master
+这样就创建成功了，前面的*代表的是当前你所在的工作分支。我们接下来就要切换工作分支。
+
+
+
+### 3- 切换分支
+$ git checkout newbranch
+这样就切换完了，可以 $ git branch 确认下。然后你要将你的改动提交到新的分支上。
+
+
+
+### 4- 提交新代码
+$ git add .
+$ git commit -a
+此时可以 $ git status 检查下提交情况。如果提交成功，我们接下来就要回主分支了，代码和之前一样。
+
+
+
+### 5- 切换到主分支
+$ git checkout master
+然后我们要将新分支提交的改动合并到主分支上
+
+
+
+### 6- 合并代码
+
+$ git merge newbranch
+合并分支可能产生冲突这是正常的，虽然我们这是新建的分支不会产生冲突，但还是在这里记录下。下面的代码可以查看产生冲突的文件，然后做对应的修改再提交一次就可以了。
+
+
+$ git diff
+我们的问题就解决了，接下来就可以push代码了。
+
+
+$ git push -u origin master
+新建分支的朋友别忘了删除这个分支
+
+
+$ git branch -D newbranch
