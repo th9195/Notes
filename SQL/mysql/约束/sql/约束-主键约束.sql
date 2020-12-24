@@ -34,6 +34,8 @@ DESC student;
 ## 删除重复ID 的数据
 DELETE FROM student WHERE id = 1;
 
+
+
 ## 建表后单独添加主键约束
 ALTER TABLE 表名 MODIFY 列名 数据类型 PRIMARY KEY ;
 ALTER TABLE student MODIFY id INT PRIMARY KEY;
