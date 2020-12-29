@@ -1,0 +1,80 @@
+
+
+# 触发器介绍
+## 触发器是与表有关的数据库对象，可以在insert、update、delete 之前或之后触发病执行触发器中定义的SQL语句;
+## 这种特性可以协助应用系统在数据库端保证数据的完整性，日志记录，数据校验等操作;
+## 使用别名 NEW 和 OLD 来引用触发器中发生变化的内容记录; 
+
+
+## 触发器的分类
+
+
+## 创建触发器
+
+DELIMITER $
+CREATE TRIGGER 触发器名称
+BEGIN|AFTER  INSERT|UPDATE|DELETE
+ON 表名
+FOR EACH ROW
+BEGIN
+	触发器SQL语句
+
+END $
+DELIMITER ; 
+
+
+
+
+## insert型的触发器
+DROP TRIGGER IF EXISTS insert_trigger;
+DELIMITER $
+CREATE TRIGGER insert_trigger
+AFTER INSERT
+ON account
+FOR EACH ROW
+BEGIN 
+	DECLARE info VARCHAR(512) DEFAULT CONCAT('插入后{id=',new.id,',name=',new.name,',money=',new.money,'}');
+	INSERT INTO account_log VALUES (NULL,'INSERT',NOW(),new.id,info);
+END $
+DELIMITER ; 
+
+## 添加数据
+INSERT INTO account VALUES (NULL,"Tom",40000);
+
+
+
+
+## update型的触发器
+DROP TRIGGER IF EXISTS update_trigger;
+DELIMITER $
+CREATE TRIGGER update_trigger 
+AFTER UPDATE
+ON account
+FOR EACH ROW
+BEGIN 
+	DECLARE info VARCHAR(512) DEFAULT CONCAT('修改前{id=',old.id,',name=',old.name,',money=',old.money,'}','修改后{id=',new.id,',name=',new.name,',money=',new.money,'}');
+	INSERT INTO account_log VALUES (NULL,'UPDATE',NOW(),new.id,info);
+END $
+DELIMITER ; 
+
+## 修改数据
+UPDATE account SET money = 50000 WHERE NAME = 'Tom';
+
+
+## delete 型触发器
+DROP TRIGGER IF EXISTS delete_trigger;
+DELIMITER $ 
+CREATE TRIGGER delete_trigger
+AFTER DELETE
+ON account
+FOR EACH ROW 
+BEGIN
+	DECLARE info VARCHAR(512) DEFAULT CONCAT('删除前{id=',old.id,',name=',old.name,',money=',old.money,'}');
+	INSERT INTO account_log VALUES(NULL,'DELETE',NOW(),old.id,info);
+END $
+DELIMITER ; 
+
+## 删除数据
+DELETE FROM account WHERE NAME='tom';
+
+

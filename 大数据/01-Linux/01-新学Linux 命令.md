@@ -120,6 +120,23 @@ systemctl status firewalld.service        #查看防火墙状态
 
 
 
+#### 显示高亮
+
+``` sql
+
+```
+
+
+
+#### 取消高亮
+
+``` sql
+linux vim取消高亮显示:
+:nohl即可
+```
+
+
+
 ### curl命令行下直接获取当前IP信息
 
 
