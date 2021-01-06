@@ -42,8 +42,6 @@
 
 ### 第一步：下载ZK的压缩包下载网址如下
 
-
-
 http://archive.apache.org/dist/zookeeper/
 我们在这个网址下载我们使用的zk版本为3.4.6
 下载完成之后，上传到我们的linux的/export/software路径下准备进行安装
@@ -99,7 +97,8 @@ echo 1 > /export/server/zookeeper-3.4.6/zkdatas/myid
 ### 第五步：安装包分发并修改myid的值
 
 在node1主机上，将安装包分发到其他机器
-第一台机器上面执行以下两个命令
+
+- 第一台机器上面执行以下两个命令
 
 ``` shell
 scp -r  /export/server/zookeeper-3.4.6/ node2:/export/server/
@@ -108,7 +107,8 @@ scp -r  /export/server/zookeeper-3.4.6/ node3:/export/server/
 
 
 
-第二台机器上修改myid的值为2
+- 第二台机器上修改myid的值为2
+
 
 ``` shell
 echo 2 > /export/server/zookeeper-3.4.6/zkdatas/myid
@@ -116,7 +116,8 @@ echo 2 > /export/server/zookeeper-3.4.6/zkdatas/myid
 
 
 
-第三台机器上修改myid的值为3
+- 第三台机器上修改myid的值为3
+
 
 ``` shell
 echo 3 > /export/server/zookeeper-3.4.6/zkdatas/myid
@@ -127,7 +128,8 @@ echo 3 > /export/server/zookeeper-3.4.6/zkdatas/myid
 ### 第六步：三台机器启动zookeeper服务
 
 三台机器分别启动zookeeper服务
-这个命令三台机器都要执行
+
+- 这个命令三台机器都要执行
 
 ``` shell
 /export/server/zookeeper-3.4.6/bin/zkServer.sh start
@@ -135,7 +137,8 @@ echo 3 > /export/server/zookeeper-3.4.6/zkdatas/myid
 
 
 
-三台主机分别查看启动状态
+- 三台主机分别查看启动状态
+
 
 ``` shell
 /export/server/zookeeper-3.4.6/bin/zkServer.sh  status
@@ -143,7 +146,8 @@ echo 3 > /export/server/zookeeper-3.4.6/zkdatas/myid
 
 
 
-停止命令
+- 停止命令
+
 
 ``` shell
 /export/server/zookeeper-3.4.6/bin/zkServer.sh stop
@@ -151,7 +155,8 @@ echo 3 > /export/server/zookeeper-3.4.6/zkdatas/myid
 
 
 
-查看版本命令
+- 查看版本命令
+
 
 ``` shell
 [root@node1 ~]# /export/server/zookeeper-3.4.6/bin/zkServer.sh  -version

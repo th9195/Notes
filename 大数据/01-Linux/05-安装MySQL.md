@@ -166,20 +166,32 @@ chkconfig mysql on #设置自启
 
 
 
-- 14、关闭防火墙
+- 14-1、关闭防火墙
 
-``` sql
+``` shell
 systemctl stop firewalld.service          #停止firewall
 systemctl disable firewalld.service       #禁止firewall开机启动
 ```
 
 
 
+- 14-2、查看防火墙状态
+
+``` shell
+[root@tanghui ~]# systemctl status firewalld.service
+● firewalld.service - firewalld - dynamic firewall daemon
+   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; disabled; vendor preset: enabled)
+   Active: inactive (dead)
+     Docs: man:firewalld(1)
+[root@tanghui ~]# 
+
+```
+
 
 
 - 15、关闭Selinux
 
-``` sql
+``` sh
 编辑虚拟机的Selinux的配置文件.
 
 vim /etc/selinux/config 
