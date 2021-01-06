@@ -1,0 +1,37 @@
+
+CREATE DATABASE IF NOT EXISTS jdbc;
+USE jdbc;
+CREATE TABLE IF NOT EXISTS uuser(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	NAME VARCHAR(32),
+	age INT 
+);
+
+
+INSERT INTO uuser VALUES 
+	(NULL,"张三",21),
+	(NULL,"李四",22),
+	(NULL,"王五",23),
+	(NULL,"赵六",24);
+
+
+DROP TABLE IF EXISTS student;
+CREATE TABLE IF NOT EXISTS student(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	NAME VARCHAR(32),
+	age INT,
+	birthday DATE
+);
+
+
+INSERT INTO student VALUES
+	(NULL,'张三',21,'1991-09-01'),
+	(NULL,'李四',22,'1991-09-02'),
+	(NULL,'王五',23,'1991-09-03'),
+	(NULL,'赵六',24,'1991-09-04');
+
+
+
+
+
+
