@@ -60,3 +60,28 @@ echo "*****************end ${operation}*****************"
 
 ```
 
+
+
+
+
+## 使用 EOF
+
+``` shell
+
+
+for node in ${myArrNodes[@]} 
+do 
+	ssh  root@$node << EOF
+		source /etc/profile
+		
+        cd   /export/data
+        tar -czvf xxxxx.tar.gz logs
+        mv $logName $data_url
+        
+        hdfs dfs -moveFromLocal "$data_url$logName" "$hadoop_url$node"
+
+    EOF
+	echo "----------${operation} ${node} ok----------"
+done
+```
+
