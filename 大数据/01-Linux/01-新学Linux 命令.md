@@ -207,3 +207,28 @@ URL	: http://www.cip.cc/223.104.20.95
 
 
 
+
+
+### Linux造任意大小的文件
+
+``` shell
+dd if=/dev/zero of=/export/data/testFile.txt bs=300M count=1
+
+
+[root@node1 ~]# dd if=/dev/zero of=/export/data/testFile.txt bs=300M count=1
+记录了1+0 的读入
+记录了1+0 的写出
+314572800字节(315 MB)已复制，1.29123 秒，244 MB/秒
+[root@node1 ~]# cd /export/data/
+[root@node1 data]# ls -shal 
+总用量 601M
+   0 drwxr-xr-x 2 root root  146 1月  11 14:27 .
+   0 drwxr-xr-x 6 root root   82 12月 30 15:52 ..
+300M -rw-r--r-- 1 root root 300M 1月  11 14:27 testFile.txt
+[root@node1 data]# 
+
+
+```
+
+
+
