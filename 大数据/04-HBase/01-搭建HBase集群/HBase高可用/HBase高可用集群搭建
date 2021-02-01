@@ -1,0 +1,117 @@
+# hbase的高可用
+
+| 主机组件                     | node1(192.168.88.161) | node2(192.168.88.162) | node3(192.168.88.163) |
+| ---------------------------- | --------------------- | --------------------- | --------------------- |
+| zookeeper                    | 是                    | 是                    | 是                    |
+| NameNode                     | 是                    | 否                    | 否                    |
+| SecondaryNamenode            | 否                    | 是                    | 否                    |
+| DataNode                     | 是                    | 是                    | 是                    |
+| ResourceManager              | 是                    | 否                    | 否                    |
+| NodeManager                  | 是                    | 是                    | 是                    |
+| Historyserver                | 否                    | 否                    | 是                    |
+| Hive                         | 是                    | 是                    | 是                    |
+| Hive（Mysql）                | 否                    | 否                    | 是                    |
+| Hive（metastore）            | 否                    | 否                    | 是                    |
+| Hive（hiveserver2）          | 否                    | 否                    | 是                    |
+| Hbase(HMaster)               | 是                    | 否                    | 否                    |
+| Hbase(HRegionServer)         | 是                    | 是                    | 是                    |
+| Hbase高可用（HMaster）       | 是                    | 是                    | 是                    |
+| Hbase高可用（HRegionServer） | 是                    | 是                    | 是                    |
+
+​		由于目前搭建好的hbase集群(HBase安装视频), 主节点仅有一台, 当主节点出现宕机后, 可能会对hbase集群产生影响, 希望能够让主节点, 变成高可用节点(加备份机), 当主节点出现宕机后, 可以让备份机成为主节点
+
+
+
+## 1- node1 上创建backup-masters文件
+
+``` sql
+-- 1)  在 node1的hbase的conf目录下, 创建 backup-masters 文件
+	cd /export/server/hbase-2.1.0/conf
+	touch  backup-masters
+```
+
+## 2- 编辑 backup-masters 添加需求的备份机
+
+``` sql
+-- 2) 编辑 backup-masters 添加需求的备份机: 
+	注意: 需要将那个节点作为备份机, 将将这个节点的地址, 设置到backup-masters中, 一行代表一个备份机
+	cd /export/server/hbase-2.1.0/conf
+	vim backup-masters
+	添加如下的内容: 此处将node2 和 node3 都作为备份机
+	node2
+	node3
+```
+
+## 3- 将配置好的 backup-masters文件发送到node2和node3中
+
+``` sql
+--3) 将配置好的 backup-masters文件发送到node2和node3中:
+	cd /export/server/hbase-2.1.0/conf
+	scp backup-masters node2:$PWD
+	scp backup-masters node3:$PWD
+```
+
+
+
+## 4- 将node2 / node3 中的backup-masters 配置文件修改
+
+``` sql
+	
+node2上: 
+	cd /export/server/hbase-2.1.0/conf
+	vim backup-masters
+	node1
+	node3
+	
+	
+node3上: 
+	cd /export/server/hbase-2.1.0/conf
+	vim backup-masters
+	node1
+	node2	
+```
+
+
+
+## 5- 重启hbase 
+
+``` sql
+
+--5) 启动hbase, 然后在UI界面, 查看是否有 backup节点出现即可 
+	注意: 启动hbase的时候, 一定要确认 zookeeper 和 hadoop是启动良好的
+	在node1 上：
+		stop-hbase.sh
+		
+		start-hbase.sh
+		
+		
+	额外: 单独启动节点
+		hbase-daemon.sh start master
+		hbase-daemon.sh start regionserver
+```
+
+
+
+
+
+## 6- Web 查看
+
+http://node1:16010/master-status
+
+注意：  如果在node2/node3上启动hbase web访问的时候就应该使用node2/node3的域名
+
+​	http://node2:16010/master-status
+
+​	http://node3:16010/master-status
+
+
+
+如下图： 
+
+​	如果在node1上启动hbase backup masters 就是 node2  node3 
+
+​	如果在node2上启动hbase backup masters 就是 node1  node3 
+
+​	如果在node3上启动hbase backup masters 就是 node1  node2
+
+![01-高可用HBase集群web显示](E:\笔记\MyNotes\Notes\大数据\04-HBase\01-搭建HBase集群\HBase高可用\images\01-高可用HBase集群web显示.png)

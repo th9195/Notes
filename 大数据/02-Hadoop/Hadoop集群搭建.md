@@ -625,7 +625,7 @@ http://192.168.88.161:19888/jobhistory
 配置方式:
 
 ``` xml
-1、打开Windows的C:\Windows\System32\drivers\etc目录下hosts文件
+1、打开Windows的C:\Windows\System32\drivers\etc目录下hosts文件  对应Linux中的/etc/hosts 文件
 2、在hosts文件中添加以下域名映射
 192.168.88.161  node1  node1.itcast.cn
 192.168.88.162  node2  node2.itcast.cn
