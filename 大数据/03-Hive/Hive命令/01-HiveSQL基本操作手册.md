@@ -170,31 +170,41 @@ CREATE [EXTERNAL] TABLE [IF NOT EXISTS] table_name
 
 ### 1-2-2 Hive建表时候的字段类型
 
-| 分类     | 类型                                           | 描述                                        | 字面量示例                                  |
-| -------- | ---------------------------------------------- | ------------------------------------------- | ------------------------------------------- |
-| 原始类型 | BOOLEAN                                        | true/false                                  | TRUE                                        |
-|          | TINYINT                                        | 1字节的有符号整数 -128~127                  | 1Y                                          |
-|          | SMALLINT                                       | 2个字节的有符号整数，-32768~32767           | 1S                                          |
-|          | INT                                            | 4个字节的带符号整数(-2147483648~2147483647) | 1                                           |
-|          | BIGINT                                         | 8字节带符号整数                             | 1L                                          |
-|          | FLOAT                                          | 4字节单精度浮点数1.0                        |                                             |
-|          | DOUBLE                                         | 8字节双精度浮点数                           | 1.0                                         |
-|          | DEICIMAL                                       | 任意精度的带符号小数                        | 1.0                                         |
-|          | STRING                                         | 字符串，变长                                | “a”,’b’                                     |
-|          | VARCHAR                                        | 变长字符串                                  | “a”,’b’                                     |
-|          | CHAR                                           | 固定长度字符串                              | “a”,’b’                                     |
-|          | BINARY                                         | 字节数组                                    | 无法表示                                    |
-|          | TIMESTAMP                                      | 时间戳，毫秒值精度                          | 122327493795                                |
-|          | DATE                                           | 日期                                        | ‘2016-03-29’                                |
-|          | Time                                           | 时分秒                                      | ‘12:35:46’                                  |
-|          | DateTime                                       | 年月日 时分秒                               |                                             |
-| 复杂类型 | ARRAY                                          | 有序的的同类型的集合                        | ["beijing","shanghai","tianjin","hangzhou"] |
-| MAP      | key-value,key必须为原始类型，value可以任意类型 | {"数学":80,"语文":89,"英语":95}             |                                             |
-| STRUCT   | 字段集合,类型可以不同                          | struct(‘1’,1,1.0)                           |                                             |
+| 分类     | 类型      | 描述                                           | 字面量示例                                  |
+| -------- | --------- | ---------------------------------------------- | ------------------------------------------- |
+| 原始类型 | BOOLEAN   | true/false                                     | TRUE                                        |
+|          | TINYINT   | 1字节的有符号整数 -128~127                     | 1Y                                          |
+|          | SMALLINT  | 2个字节的有符号整数，-32768~32767              | 1S                                          |
+|          | INT       | 4个字节的带符号整数(-2147483648~2147483647)    | 1                                           |
+|          | BIGINT    | 8字节带符号整数                                | 1L                                          |
+|          | FLOAT     | 4字节单精度浮点数1.0                           |                                             |
+|          | DOUBLE    | 8字节双精度浮点数                              | 1.0                                         |
+|          | DEICIMAL  | 任意精度的带符号小数                           | 1.0                                         |
+|          | STRING    | 字符串，变长                                   | “a”,’b’                                     |
+|          | VARCHAR   | 变长字符串                                     | “a”,’b’                                     |
+|          | CHAR      | 固定长度字符串                                 | “a”,’b’                                     |
+|          | BINARY    | 字节数组                                       | 无法表示                                    |
+|          | TIMESTAMP | 时间戳，毫秒值精度                             | 122327493795                                |
+|          | DATE      | 日期                                           | ‘2016-03-29’                                |
+|          | Time      | 时分秒                                         | ‘12:35:46’                                  |
+|          | DateTime  | 年月日 时分秒                                  |                                             |
+| 复杂类型 | ARRAY     | 有序的的同类型的集合                           | ["beijing","shanghai","tianjin","hangzhou"] |
+| 复杂类型 | MAP       | key-value,key必须为原始类型，value可以任意类型 | {"数学":80,"语文":89,"英语":95}             |
+| 复杂类型 | STRUCT    | 字段集合,类型可以不同                          | struct(‘1’,1,1.0)                           |
 
 
 
 ### 1-2-3 内部表操作
+
+- 特点
+
+<span style="color:red;background:white;font-size:20px;font-family:楷体;">**内部表在删除表的时候，表的元数据和表真是数据全部被删除 **</span>
+
+- 格式
+
+``` sql
+create table xxx
+```
 
 
 
@@ -423,6 +433,20 @@ drop table stu2;
 
 ### 1-2-4 外部表操作
 
+- 特点
+
+  <span style="color:red;background:white;font-size:20px;font-family:楷体;">**外部表在删除表的时候，表的元数据会被删除  但是表真是数据不会被删除 **</span>
+
+- 格式
+
+``` sql
+create external table xxx
+```
+
+
+
+
+
 #### 1、数据装载载命令Load
 
 - Load命令用于将外部数据加载到Hive表中
@@ -609,7 +633,7 @@ drop table stu2;
     hadoop fs -put teacher.txt /hivedatas/
     ```
 
-    追加加载
+    **追加加载**
 
     ``` sql
     0: jdbc:hive2://node3:10000> load data inpath '/hivedatas/teacher.txt' into table teacher;
@@ -630,7 +654,7 @@ drop table stu2;
     
     ```
 
-    覆盖加载
+    **覆盖加载**
 
     ``` sql
     0: jdbc:hive2://node3:10000> load data inpath '/hivedatas/teacher.txt' overwrite into table teacher;
@@ -1116,6 +1140,12 @@ create table score(sid string ,cid string ,sscore int) partitioned by (month str
 
 #### 2、单级分区- 加载数据到分区表中
 
+- 添加一条数据
+
+``` sql
+insert into table score partition(month ='202001') values ('001','002',100);
+```
+
 - 加载一月的成绩
 
 ``` sql
@@ -1525,7 +1555,14 @@ No rows affected (0.069 seconds)
 
 ### 1-2-7 分桶表
 
+
+
 - 分桶就是将数据划分到不同的文件，其实就是MapReduce的分区;
+
+- 作用：
+
+  - <span style="color:red;font-size:20px;font-faily:黑体" >方便数据抽样查询，我们可以手动抽样； </span>
+  - <span style="color:red;font-size:20px;font-faily:黑体" >提高多表join查询效率；</span>
 
 - 将数据按照指定的字段进行分成多个桶中去，说白了就是将数据按照字段进行划分，可以将数据按照字段划分到多个文件当中去;
 
@@ -1533,7 +1570,7 @@ No rows affected (0.069 seconds)
 
   字段.hash%分区数量=？
 
-  某个字段的hash值  与 分区的数量取模 ；
+  <span style="color:red;font-size:20px;font-faily:黑体" >某个字段的hash值  与 分区的数量取模 ； </span>
 
 - 桶表的数据加载，由于桶表的数据加载通过hdfs  dfs  -put文件或者通过load  data均不好使;
 
@@ -1615,7 +1652,9 @@ No rows affected (0.141 seconds)
 
 注意： 桶表的数据加载，由于桶表的数据加载通过hdfs  dfs  -put文件或者通过load  data均不好使，
 
-只能通过insert  overwrite 创建普通表，并通过insert  overwrite的方式将普通表的数据通过查询的方式加载到桶表当中去
+​		<span style="color:red;background:white;font-size:20px;font-family:黑体;">**只能通过insert  overwrite 创建普通表，并通过insert  overwrite的方式将普通表的数据通过查询的方式加载到桶表当中去**</span>
+
+
 
 ``` sql
 0: jdbc:hive2://node3:10000> insert overwrite table course_cluster select * from course_common cluster by (c_id);
@@ -1772,7 +1811,7 @@ No rows selected (0.104 seconds)
 
   
 
-- ***通过查询方式加载数据 insert overwrite table xxx partition(xxxx)  select xxx **
+- **通过查询方式加载数据 insert overwrite table xxx partition(xxxx)  select xxx **
 
   ``` sql
   create table score4 like score;
@@ -1799,7 +1838,7 @@ No rows selected (0.104 seconds)
 
 #### 2、多插入模式（一个表分为多个表）
 
-##### 语法
+- 语法
 
 ``` sql
 from 总表 
@@ -1810,9 +1849,10 @@ from 总表
 
 
 - 使用场景：
-  - 常用于实际生产环境当中，将一张表拆开成两部分或者多部分
-
-##### 案例：
+  
+- 常用于实际生产环境当中，将一张表拆开成两部分或者多部分
+  
+- 案例：
 
 - 给score表加载数据
 
@@ -3746,7 +3786,9 @@ select reflect('java.lang.Math','max',2,4);
 
 
 
-## 3-3 Hive的开窗函数(函数名（） over(partition by xxx order by yyy))
+## 3-3 Hive的开窗函数
+
+<span style="color:red;background:white;font-size:20px;font-family:黑体;">**(函数名（） over(partition by xxx order by yyy))**</span>
 
 ### 3-3-1 窗口函数(一) ROW_NUMBER,RANK,DENSE_RANK
 

@@ -1,8 +1,10 @@
 # 1- HBase 架构图
 
+图片：
 
+​	E:\笔记\MyNotes\Notes\大数据\04-HBase\03-HBase架构\images\01-hbase集群架构.png
 
-![01-hbase集群架构](E:\博学谷\大数据\大数据进阶课程\赵佳乐\授课资料\day15_HBase\图片\01-hbase集群架构.png)
+![01-hbase集群架构](E:\笔记\MyNotes\Notes\大数据\04-HBase\03-HBase架构\images\01-hbase集群架构.png)
 
 # 2- HMaster 主节点
 

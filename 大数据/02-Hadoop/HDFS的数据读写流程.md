@@ -1,4 +1,4 @@
-## HDFS的数据读写流程
+##  HDFS的数据读写流程
 
 
 
@@ -9,8 +9,8 @@
 3. Client开始对数据切片成多个block;
 4. Client 向NameNode 申请上传第一个block;
 5. NameNode 根据相关策略选出最合适的n台datanode 并告知Client;
-6. Client 拿到dataNode与某个dataNode 建立连接，多个datanode之间也建立连接；
-7. Client 通过packet将block发送给每天datanode;
+6. Client 拿到dataNode与这个dataNode 建立连接，多个datanode之间也建立连接；
+7. Client 通过packet将block发送给每个datanode;
 8. datanode 接收到数据并存储数据，返回ACK;
 9. Client 接收到n 个ACK 后，通知namenode 更新 元数据，比如大小、时间、block信息等；
 10. 重复步骤4；

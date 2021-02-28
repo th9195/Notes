@@ -209,7 +209,7 @@ URL	: http://www.cip.cc/223.104.20.95
 
 
 
-### Linux造任意大小的文件
+### Linux创建任意大小的文件
 
 ``` shell
 dd if=/dev/zero of=/export/data/testFile.txt bs=300M count=1
