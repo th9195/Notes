@@ -2,9 +2,25 @@
 
 ## 账号
 
+### github：
+
 th9195
 
 th448725485
+
+
+
+### Gitee ：
+
+15927564250/tomth270
+
+th448725485
+
+​	
+
+
+
+
 
 
 
@@ -72,6 +88,8 @@ git add .
 git commit -m "添加注释"
 
 git push origin master
+
+git push -f origin master
 
 或者  git push   (后期可以直接使用这个即可)OK
 

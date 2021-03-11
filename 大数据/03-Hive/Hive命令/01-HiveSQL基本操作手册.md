@@ -437,7 +437,7 @@ drop table stu2;
 
   <span style="color:red;background:white;font-size:20px;font-family:楷体;">**外部表在删除表的时候，表的元数据会被删除  但是表真是数据不会被删除 **</span>
 
-- 格式
+- 格式external
 
 ``` sql
 create external table xxx
@@ -623,9 +623,9 @@ create external table xxx
 
 - 7- 从hdfs文件系统向表中加载数据 (去掉local)
 
-  - 其实就是一个移动文件的操作;
-
   - 需要提前将数据上传到hdfs文件系统;
+
+  - 其实就是一个移动文件的操作(剪切操作);
 
     ``` shell
     hadoop fs -mkdir -p /hivedatas
@@ -809,7 +809,7 @@ Array是数组类型，Array中存放相同类型的数据
   1,zhangsan,father:xiaoming#mother:xiaohuang#brother:xiaoxu,28
   2,lisi,father:mayun#mother:huangyi#brother:guanyu,22
   3,wangwu,father:wangjianlin#mother:ruhua#sister:jingtian,29
-  4,mayun,father:mayongzhen#mother:angelababy,26
+  4,mayun,father:mayongzhen#mother:angelababy,26  
   ```
 
   
@@ -1111,6 +1111,8 @@ Array是数组类型，Array中存放相同类型的数据
   
 
 ### 1-2-6 分区表
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**分区就是分文件夹**</span>
 
 - 在大数据中，最常用的一种思想就是分治，分区表实际就是对应hdfs文件系统上的的独立的文件夹，该文件夹下是该分区所有数据文件。
 
@@ -1594,9 +1596,15 @@ set hive.enforce.bucketing=true;
 
 注意：开启hive的桶表功能(如果执行该命令报错，表示这个版本的Hive已经自动开启了分桶功能，则直接进行下一步)
 
+#### 2、打开限制对桶表进行load操作
 
+``` sql
+set hive.strict.checks.bucketing=true;
+```
 
-#### 2、设置reduce的个数
+注意：开启hive的桶表功能(如果执行该命令报错，表示这个版本的Hive已经自动开启了分桶功能，则直接进行下一步)
+
+#### 3、设置reduce的个数
 
 ``` sql
 set mapreduce.job.reduces=分桶个数
@@ -1604,7 +1612,7 @@ set mapreduce.job.reduces=分桶个数
 
 
 
-#### 3、创建分桶表 clustered by (字段名) into 分区数量 buckets;
+#### 4、创建分桶表 clustered by (字段名) into 分区数量 buckets;
 
 ``` sql
  create table course_cluster(c_id string,c_name string , t_id string) clustered by (根据哪个字段分区) into 分区数量 buckets row format delimited fields terminated by '\t';
@@ -1815,7 +1823,7 @@ No rows selected (0.104 seconds)
 
   ``` sql
   create table score4 like score;
-  insert overwrite table score4 partition(month = '202006') select sid,cid,sscore from score;
+  insert into|overwrite table score4 partition(month = '202006') select sid,cid,sscore from score;
   ```
 
   注意： 后面的select  语句不能使用select * from score;  因为这个score 里面有个分区month，这样差相当于有四个字段。
@@ -2855,7 +2863,7 @@ de
 
 
 
-#### 3-1-3-7 字符串转大写函数：lower,ucase
+#### 3-1-3-7 字符串转大写函数：upper,ucase
 
 - 语法: lower(string A) ucase(string A)
 
@@ -2866,7 +2874,7 @@ de
 - 举例：
 
 ``` sql
-hive> select lower('abSEd');
+hive> select upper('abSEd');
 ABSED
 hive> select ucase('abSEd');
 ABSED
@@ -3159,7 +3167,16 @@ hive> select split('abtcdtef','t');
 0: jdbc:hive2://node3:10000> 
 ```
 
+#### 3-1-4-7 日期转季度函数: quarter
 
+- 语法: month (string date)
+- 注意： 参数必须是  yyyy-MM-dd xxxxxxx格式
+
+- 返回值: int
+
+- 说明:返回日期中的月份。
+
+- 举例：
 
 #### 3-1-4-7 日期转月函数: month
 
@@ -3454,9 +3471,9 @@ mary
 
 
 
-#### 3-1-5-3 条件判断函数：CASE
+#### 3-1-5-3 条件判断函数：CASE  WHEN XXX
 
-- 语法: CASE WHEN a THEN b [WHEN c THEN d]* [ELSE e] END
+- 语法: CASE WHEN  condition_a THEN b [WHEN condition_c THEN d]* [ELSE e] END
 
 - 返回值: T
 
@@ -3485,6 +3502,62 @@ where
 	month = '202004';
 
 ```
+
+
+
+#### 3-1-5-4 非空查找函数: COALESCE函数
+
+- 语法: COALESCE(T v1, T v2, …)
+
+- 返回值: T
+
+- 说明: 返回参数中的第一个非空值；如果所有值都为 NULL，那么返回 NULL
+
+- 举例：
+
+``` sql
+hive> select COALESCE(null,'100','50′) from lxw_dual;
+
+100
+```
+
+
+
+#### 3-1-5-5  nvl函数
+
+- 语法: nvl(T value, T default_value)
+
+- 返回值: T
+
+- 说明: 当参数1的值为null时，此时整个函数返回参数2的默认值，否则返回其本身（value）;
+
+- 举例：
+
+``` sql
+select nvl(name,'Tom');
+```
+
+
+
+#### 3-1-5-6 isnull函数
+
+- 语法: isnull(a)
+
+- 返回值: true or false
+
+- 说明: 判断参数1是否为null，如果null return true, 否则返回false;
+
+
+
+#### 3-1-5-7  isnotnull函数
+
+- 语法: isnotnull(a)
+
+- 返回值: true or false
+
+- 说明: 判断参数1是否为null，如果null return false, 否则返回true;
+
+
 
 
 

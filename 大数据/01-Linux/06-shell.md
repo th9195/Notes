@@ -802,11 +802,27 @@ esac				# case 结束
 
 
 
+## shell系统函数
+
+### date日期
+
+``` sql
+date +'%Y-%m-%d %H:%M:%S'   -- 以特定的格式输出当前的日期
+date -d '-1 week' +'%Y-%m-%d %H:%M:%S'   	-- 1周前
+date -d '-1 day' +'%Y-%m-%d %H:%M:%S'		-- 1天前
+date -d '-2 min'  +'%Y-%m-%d %H:%M:%S'		-- 1分钟前
+date -d '-2 hour'  +'%Y-%m-%d %H:%M:%S'		-- 2小时前
+```
+
+ 
 
 
 
 
-## 函数
+
+
+
+## 自定义函数
 
 ### 语法
 
