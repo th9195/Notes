@@ -126,6 +126,7 @@ CREATE [EXTERNAL] TABLE [IF NOT EXISTS] table_name
    [ROW FORMAT row_format] 
    [STORED AS file_format] 
    [LOCATION hdfs_path]
+   [TBLPROPERTIES ('orc.compress'='SNAPPY','orc.create.index'='true','orc.bloom.filter.columns'='itcast_clazz_id,creator')]
 ```
 
 说明：
@@ -165,6 +166,8 @@ CREATE [EXTERNAL] TABLE [IF NOT EXISTS] table_name
 - Hive也是 针对某一列进行桶的组织。Hive采用对列值哈希，然后除以桶的个数求余的方式决定该条记录存放在哪个桶当中。 
 
 8、**LOCATION**: 指定表在HDFS上的存储位置。
+
+9、[TBLPROPERTIES ('orc.compress'='SNAPPY','orc.create.index'='true','orc.bloom.filter.columns'='itcast_clazz_id,creator')]
 
 
 

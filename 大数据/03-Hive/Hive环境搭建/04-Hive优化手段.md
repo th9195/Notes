@@ -71,7 +71,7 @@ set hive.vectorized.execution.enabled=true; 默认就是true   是否开启批�
 
 ### 1.4 读取零拷贝
 
-​	在读取HDFS的数据的时候, <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**只需要将需要的数据读取到内存中, 不需要的数据, 就不进行读取操作**</span>,
+​	在读取HDFS的数据的时候, <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**只将需要的数据读取到内存中, 不需要的数据, 就不进行读取操作**</span>,
 
 ​	注意事项: <span style="color:red;background:white;font-size:20px;font-family:楷体;">**如果想要实现此功能, 要求表的数据格式 ORC**</span>
 
@@ -153,7 +153,7 @@ set hive.exec.orc.zerocopy=true; --是否开启读取零拷贝（只要有用字
       set hive.optimize.skewjoin.compiletime=true;  默认关闭  
       ```
 
-    * 整体优化思想都是一样的, 只不过编译时优化在编译器形成执行计划的时候, 就以及优化完毕了
+    * 整体优化思想都是一样的, 只不过编译时优化在编译器形成执行计划的时候, 就已经优化完毕了
 
     * 注意: <span style="color:red;background:white;font-size:20px;font-family:楷体;">**在执行之前,或者建表之前,  就需要指定那些key的值会导致数据倾斜**</span>
 
@@ -312,5 +312,155 @@ set hive.groupby.skewindata=true;   -- hive的 group by 数据倾斜，使用两
 
 set hive.optimize.correlation=true; -- hive的关联优化器 减少shuffle次数
 
+```
+
+
+
+
+
+
+
+## 3. hive的索引优化
+
+- 索引: 提升读写的效率
+
+
+- 为什么说索引可以提升性能? 
+
+
+![image-20210105101640860](images/image-20210105101640860.png)
+
+- 在hive中, 同样也是支持索引的, hive的索引主要三大类: 
+
+  - 原始索引
+  - Row Group Index: 行组索引
+  - Bloom Filter Index:  开发过滤索引
+
+  
+
+###  原始索引 -- 不推荐使用
+
+* 特点：
+* <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**索引表不会自动更新**</span>；
+* 注意: 
+  * 手动更新, 本质就上在重建索引操作
+
+```properties
+在对目标表进行数据的更新(增删改)操作, hive的原始索引不会进行自动更新的,需要进行手动更新
+	手动更新的效率是极低的
+所以说, 在hive的3.0版本后, 不支持构建原始索引了
+注意: 手动更新, 本质就上在重建索引操作
+```
+
+
+
+### Row Group Index: 行组索引
+
+![wps2](images/wps2-1615530683381.png)
+
+
+
+- 过程描述：
+
+``` properties
+描述过程: 
+	针对ORC类型存储格式表, 一旦开启了行组索引, 在ORC文件中每个scripts的片段（256M）中会保持每个字段的最大最小值的索引数据（IndexData）,这里的IndexData 就是Row Group Index 行组索引 也叫min-max Index大小对比索引;
+	当查询时候, 根据这个建立行组索引的字段查询时候, 可以过滤掉不需要扫描的片段, 从而减少扫描量, 提升查询的性能;
+```
+
+
+
+- 使用行组条件必要条件
+
+```properties
+条件: 
+ 	1) 表必须是ORC类型
+ 	2) 建表时, 必须制定以下信息: ’orc.create.index’=’true’   开启行组索引
+ 	3) 在插入数据的时候, 必须要对建立索引的字段进行排序;否则min/max值就无意义;
+ 	4) 一般使用在数值类型的字段上
+```
+
+
+
+例子:
+
+```sql
+CREATE TABLE lxw1234_orc2 stored AS ORC
+TBLPROPERTIES
+(
+    'orc.compress'='SNAPPY',
+
+    'orc.create.index'='true'    --     开启行组索引
+)
+
+插入数据: 
+    insert into table  lxw1234_orc2 
+        SELECT CAST(siteid AS INT) AS id,
+            pcid
+            FROM lxw1234_text
+
+            DISTRIBUTE BY id sort BY id; --     插入的数据保持排序
+    
+查询数据: 
+	SELECT COUNT(1) FROM lxw1234_orc1 WHERE id >= 1382 AND id <= 1399;
+
+```
+
+
+
+### Bloom Filter Index:  开发过滤索引
+
+- 过程描述：
+
+``` properties
+描述过程:
+	一旦通过开发过滤索引, 对表中某几个字段建立索引, 在ORC的每个script片段中, 就会记录下这个字段对应的值,存储在那些位置上, 查询时候, 根据查询的字段的值, 从索引中确定要查询的值在哪些片段中, 直接到片段中获取即可, 这样也相当于减少扫描量, 从而提升性能;
+```
+
+- 使用开发过滤索引必要条件
+
+```properties
+条件: 
+	1) 表必须是ORC类型;
+	2) 在建表的时候, 需要指定那些字段作为开发过滤索引: "orc.bloom.filter.columns"="字段1,字段2.."
+	3) 只能进行 等值（=） 过滤查询, 不局限于类型
+```
+
+例子:
+
+```sql
+CREATE TABLE lxw1234_orc2 stored AS ORC
+TBLPROPERTIES
+(
+    'orc.compress'='SNAPPY',
+    'orc.create.index'='true',  -- 可以共用, 也可以单用
+--     pcid字段开启BloomFilter索引
+    "orc.bloom.filter.columns"="pcid"
+)
+
+插入数据: 如果是单用开发过滤索引, 插入方案不限
+insert into table lxw1234_orc2 
+SELECT CAST(siteid AS INT) AS id,
+pcid
+FROM lxw1234_text
+DISTRIBUTE BY id sort BY id;
+注意: 由于在建表的额时候, 使用行组索引, 所以需要对建立行组索引字段, 进行排序插入
+
+使用操作: 
+	SELECT COUNT(1) FROM lxw1234_orc1 WHERE id >= 0 AND id <= 1000  
+	AND pcid IN ('0005E26F0DCCDB56F9041C','A');
+
+```
+
+
+
+### hive的索引优化总结
+
+- 空间换时间的操作；
+
+- 在使用开发过滤索引, 如何选择索引字段:  
+
+```properties
+ 将那些经过被作为where条件或者是join条件的等值连接的字段, 作为开发过滤索引的字段。 
 ```
 
