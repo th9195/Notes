@@ -2,8 +2,13 @@
 
 请查看文档：.\kafka安装\kafka环境搭建.docx
 
+
+
+
+
 # 2- kafka集群一键启动
 
+- 注意： 启动kafka之前必须启动zookeeper.(有一键启动脚本)
 
 
 - 编写一键启动 start-kafka.sh脚本
@@ -144,3 +149,28 @@ echo "************************************end ${operation} all node*************
 
 ```
 
+
+
+
+
+# 3- 查看状态
+
+- 启动后使用zookeeper工具是否正常
+
+- 工具路径
+
+  ``` properties
+  F:\博学谷\大数据\大数据进阶课程\赵佳乐\Kafka资料\ZooInspector\build\
+  ```
+
+- 工具使用命令
+
+  ``` properties
+  java -jar .\zookeeper-dev-ZooInspector.jar
+  ```
+
+  
+
+![image-20210413100400246](images/image-20210413100400246.png)
+
+![image-20210413101444825](images/image-20210413101444825.png)

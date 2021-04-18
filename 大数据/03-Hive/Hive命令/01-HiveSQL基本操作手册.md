@@ -2530,13 +2530,16 @@ select sid ,avg(sscore) avg from score group by sid order by sid,avg;
 
 ### 2-5-3 Distribute By-分区排序 （分组 + 排序）
 
-Distribute By：类似MR中partition，进行分区，结合sort by使用。
+- Distribute By：<span style="color:red;background:white;font-size:20px;font-family:楷体;">**类似MR中partition，进行分区，结合sort by使用。**</span>
 
-注意 ：**Hive要求DISTRIBUTE BY语句要写在SORT BY语句之前**。
 
-对于distribute by进行测试，一定要分配多reduce进行处理，否则无法看到distribute by的效果。
+- 注意 ：<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Hive要求DISTRIBUTE BY语句要写在SORT BY语句之前**</span>。
 
-distribute by  + sort by :  distribute by  实现分区，sort by 对每个分区的数据进行排序；
+
+- 对于distribute by进行测试，一定要分配多reduce进行处理，否则无法看到distribute by的效果。
+
+
+- <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**distribute by  + sort by :  distribute by  实现分区，sort by 对每个分区的数据进行排序；**</span>
 
 
 
@@ -3426,6 +3429,19 @@ hive> select split('abtcdtef','t');
 
 ```
 
+#### 3-1-4-17 计算时-分-秒
+
+- 如何计算3个小时前的时间？ 如何计算40分钟后的时间？
+- 思路：将时间转换为时间戳（秒），再加减间隔的时间戳 3小时=3 * 60 * 60  ； 40分钟 = 40 * 60 ;
+- 举例：8:30上班时间，上班前2小时和上班后30分钟内属于正常打卡
+
+``` sql
+SELECT unix_timestamp('2021-03-16 08:30:00','yyyy-MM-dd HH:mm:ss') as currentTime,  
+unix_timestamp('2021-03-16 08:30:00','yyyy-MM-dd HH:mm:ss') - 3*60*60 as beforeTime,
+unix_timestamp('2021-03-16 08:30:00','yyyy-MM-dd HH:mm:ss') + 30*60 afterTime;
+
+```
+
 
 
 
@@ -3538,6 +3554,7 @@ hive> select COALESCE(null,'100','50′) from lxw_dual;
 
 ``` sql
 select nvl(name,'Tom');
+select nvl(id,'');
 ```
 
 
@@ -3612,19 +3629,19 @@ select nvl(name,'Tom');
 ``` sql
 
 字段: depno  	depname
-20	 SMITH   
-30 	ALLEN   
-30 	WARD    
-20	 JONES   
-30 	MARTIN  
-30 	BLAKE   
-10 	CLARK   
-20	 SCOTT   
-10 	KING    
-30	 TURNER  
-20	 ADAMS   
-30	 JAMES   
-20 	FORD    
+20	SMITH
+30	ALLEN
+30	WARD
+20	JONES
+30	MARTIN
+30	BLAKE
+10	CLARK
+20	SCOTT
+10	KING
+30	TURNER
+20	ADAMS
+30	JAMES
+20	FORD 
 ```
 
 
@@ -3804,6 +3821,7 @@ select explode(depnames) from emp2;
 ### 3-2-3 Reflect函数
 
 - **reflect函数可以支持在sql中调用java中的自带函数**
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**这个java中的函数必须是静态方法；**</span>
 
 #### 3-2-3-1 使用java.lang.Math当中的Max求两列中最大值
 
@@ -4014,13 +4032,20 @@ from
 
 #### 3-3-1-4 总结
 
-- row_number: 	1-2-3-4-5-6
-- rank:   1-2-2-4-4-6
-- dense_rank: 1-2-2-3-3-4
+- 使用语法：
+
+  ​	<span style="color:red;background:white;font-size:20px;font-family:黑体;">**row_number/rank/dense_rank() over(partition by xxx order by yyy)**</span>
+
+- 特点：
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**row_number: 	1-2-3-4-5-6 不重复 + 不跳**</span>
+  - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**rank:   1-2-2-4-4-6  重复  + 跳**</span>
+  - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**dense_rank: 1-2-2-3-3-4 重复 + 不跳**</span>
 
 
 
 ### 3-3-2 Hive分析窗口函数(2) SUM,AVG,MIN,MAX
+
+- 可以做累计计算；比如前N天的和/平均值/最小值/最大值
 
 #### 3-3-2-1 数据准备
 
@@ -4106,7 +4131,7 @@ from
 
 ```
 
-- 如果没有order  by排序语句  默认把分组内的所有数据进行sum操作
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**如果没有order  by排序语句  默认把分组内的所有数据进行sum操作**</span>
 
 ``` sql
 select 
@@ -4242,18 +4267,18 @@ from
 
 - 总结
 
-``` sql
-/*
+``` properties
+
 - 如果不指定rows between,默认为从起点到当前行;
 - 如果不指定order by，则将分组内所有值累加;
 - 关键是理解rows between   and  含义,也叫做window子句：
-  - preceding：往前
-  - following：往后
+  - n preceding：往前n 行
+  - m following：往后 m 行
   - current row：当前行
   - unbounded：起点
   - unbounded preceding 表示从前面的起点
   - unbounded following：表示到后面的终点
- */ 
+ 
 ```
 
 
@@ -4289,15 +4314,15 @@ from itcast_t2;
 - 当Hive提供的内置函数无法满足你的业务处理需要时，此时就可以考虑使用用户自定义函数（UDF：user-defined function）。
 
 - 根据用户自定义函数类别分为以下三种：
-  1. UDF（User-Defined-Function）
-     - 一进一出  
-     - 类似于:lower/lower/reverse
-  2. UDAF（User-Defined Aggregation Function）
-     - 聚集函数，多进一出
-     -  类似于：count/max/min
-  3. UDTF（User-Defined Table-Generating Functions）
-     - 一进多出
-     - 如lateral view explode()
+  1. <span style="color:red;background:white;font-size:20px;font-family:楷体;">**UDF（User-Defined-Function）**</span>
+     - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**一进一出**</span>  
+     - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**类似于:lower/lower/reverse**</span>
+  2. <span style="color:red;background:white;font-size:20px;font-family:楷体;">**UDAF（User-Defined Aggregation Function）**</span>
+     - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**聚集函数，多进一出**</span>
+     -  <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**类似于：count/max/min**</span>
+  3. <span style="color:red;background:white;font-size:20px;font-family:楷体;">**UDTF（User-Defined Table-Generating Functions）**</span>
+     - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**一进多出**</span>
+     - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**如lateral view explode()**</span>
 
 ### 3-4-2 自定义UDF 一进一出
 
@@ -4317,7 +4342,7 @@ from itcast_t2;
 
 - 第一步：创建maven  java 工程，导入jar包
 
-``` sql
+``` xml
 <dependencies>
     <dependency>
         <groupId>org.apache.hive</groupId>
@@ -4334,7 +4359,7 @@ from itcast_t2;
 
 - 第二步：开发java类继承UDF，并重载evaluate 方法
 
-``` sql
+``` java
 
 public class Myudf  extends UDF {
 
@@ -4363,7 +4388,9 @@ public class Myudf  extends UDF {
 
 
 
-#### 3-4-2-2 函数使用方式1-临时函数 temporary
+#### 3-4-2-2 自定义函数使用方式1
+
+- 临时函数 temporary
 
 - 将我们的项目打包，并上传到hive的lib目录下
 
@@ -4371,15 +4398,15 @@ public class Myudf  extends UDF {
 
   - 将jar包上传到 /export/server/hive-2.1.0/lib目录，并重命名我们的jar包名称
 
-  ``` sql
+  ``` shell
   cd /export/server/hive-2.1.0/lib
   mv day14_hive_udf-1.0-SNAPSHOT.jar myupper.jar
   ```
 
 - hive的客户端添加我们的jar包
 
-  ``` sql
-  add jar /export/server/hive-2.1.0/lib/myupper.jar
+  ``` shell
+  hive> add jar /export/server/hive-2.1.0/lib/myupper.jar
   ```
 
   
@@ -4387,7 +4414,7 @@ public class Myudf  extends UDF {
 - 设置函数与我们的自定义函数关联-临时函数 (temporary)
 
   ``` sql
-  create temporary function my_lower as 'com.fiberhome.udf.Myudf';
+  create temporary function myupper as 'com.fiberhome.udf.Myudf';
   ```
 
   
@@ -4406,7 +4433,9 @@ public class Myudf  extends UDF {
 
   
 
-#### 3-4-2-3 函数使用方式2-永久函数 (jar 包必须放在hdfs上)
+#### 3-4-2-3 自定义函数使用方式2
+
+- 永久函数 (jar 包必须放在hdfs上)
 
 - 把自定义函数的jar上传到hdfs中
 
@@ -4420,7 +4449,7 @@ public class Myudf  extends UDF {
 - 创建永久函数
 
   ``` sql
-  create function myupper as 'com.fiberhome.udf.Myudf' using jar 'hdfs://node1:8020/hive/funcs/myupper.jar';
+  hive> create function myupper as 'com.fiberhome.udf.Myudf' using jar 'hdfs://node1:8020/hive/funcs/myupper.jar';
   ```
 
   
@@ -4446,17 +4475,119 @@ public class Myudf  extends UDF {
 
 #### 3-4-3-2 代码实现
 
+``` java
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.ObjDoubleConsumer;
+
+public class MyUDTF extends GenericUDTF {
+    
+    // transient : 瞬化,不序列化
+    private final transient Object[] forwardListObj = new Object[1];
+
+    // 初始化代码， 只会执行一次
+    @Override
+    public StructObjectInspector initialize(StructObjectInspector argOIs) throws UDFArgumentException {
+        //设置列名的类型
+        List<String> fieldNames = new ArrayList<>();
+        
+        //设置列名
+        fieldNames.add("column_01");  // 第一列名称
+        //fieldNames.add("column_02"); // 第二列名称
+        
+        List<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>()  ;//检查器列表
+
+        //设置输出的列的值类型
+        // 第一列类型为String
+        fieldOIs.add(PrimitiveObjectInspectorFactory.javaStringObjectInspector); 
+        
+        // 第二列类型为String
+        //fieldOIs.add(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+         
+        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
+
+    }
+    
+    
+	// 数据处理代码 - 该方法每获取一行数据就会执行一次
+    /* select my_udtf("zookeeper,hadoop,hdfs,hive,MapReduce",",") word;
+    	在调用的时候有两个参数:
+    		参数1: "zookeeper,hadoop,hdfs,hive,MapReduce"
+    		参数2: ","
+    	所以 :
+    		objects[0] = "zookeeper,hadoop,hdfs,hive,MapReduce"
+    		objects[1] = ","
+    */
+    @Override
+    public void process(Object[] objects) throws HiveException {
+        //1:获取原始数据
+        String args = objects[0].toString();
+        
+        //2:获取数据传入的第二个参数，此处为分隔符
+        String splitKey = objects[1].toString();
+        
+        //3.将原始数据按照传入的分隔符进行切分
+        String[] fields = args.split(splitKey);
+       
+        //4:遍历切分后的结果，并写出
+        for (String field : fields) {
+            
+            //将每一个单词添加值对象数组
+            forwardListObj[0] = field;
+            
+            //将对象数组内容写出
+            forward(forwardListObj); // 每调用一次这个方法，就会生成一行数据
+        }
+
+    }
+
+    @Override
+    public void close() throws HiveException {
+
+    }
+}
+```
+
 
 
 #### 3-4-3-3 添加我们的jar包
+
+- 将打包的jar包上传到node3主机/export/data/hive-2.1.0/lib目录,并重命名我们的jar包名称
+
+``` shell
+cd /export/data/hive-2.1.0/lib
+mv original-day_10_hive_udtf-1.0-SNAPSHOT.jar my_udtf.jar
+```
+
+- hive的客户端添加我们的jar包,将jar包添加到hive的classpath下
+
+``` sql
+hive> add jar /export/server/hive-2.1.0/lib/my_udtf.jar;
+```
 
 
 
 #### 3-4-3-4 创建临时函数与开发后的udtf代码关联
 
+``` sql
+hive>create temporary function my_udtf as 'cn.itcast.udtf.MyUDTF';
+```
+
 
 
 #### 3-4-3-5 使用自定义udtf函数
+
+```sql
+hive>select my_udtf("zookeeper,hadoop,hdfs,hive,MapReduce",",") word;
+```
 
 
 
@@ -4468,21 +4599,119 @@ public class Myudf  extends UDF {
 
 # 4- hive的数据压缩
 
+- 总结：
+
+  我们可以在map端和reduce端引入压缩功能；
+
+- 优点： 
+
+``` properties
+1- Map端和reduce端传输数据时网络宽度降低；
+
+2- Reduce端产生结果时，占用磁盘空间减少；（不影响hive 查询）
+```
+
+
+
 ## 4-1 MR支持的压缩编码
+
+| 压缩格式 | 工具  | 算法    | 文件扩展名 | 是否可切分 |
+| -------- | ----- | ------- | ---------- | ---------- |
+| DEFAULT  | 无    | DEFAULT | .deflate   | 否         |
+| Gzip     | gzip  | DEFAULT | .gz        | 否         |
+| bzip2    | bzip2 | bzip2   | .bz2       | 是         |
+| LZO      | lzop  | LZO     | .lzo       | 否         |
+| LZ4      | 无    | LZ4     | .lz4       | 否         |
+| Snappy   | 无    | Snappy  | .snappy    | 否         |
+|          |       |         |            |            |
+
+
+
+- 为了支持多种压缩/解压缩算法，Hadoop引入了编码/解码器，如下表所示
+
+| 压缩格式 | 对应的编码/解码器                          |
+| -------- | ------------------------------------------ |
+| DEFLATE  | org.apache.hadoop.io.compress.DefaultCodec |
+| gzip     | org.apache.hadoop.io.compress.GzipCodec    |
+| bzip2    | org.apache.hadoop.io.compress.BZip2Codec   |
+| LZO      | com.hadoop.compression.lzo.LzopCodec       |
+| LZ4      | org.apache.hadoop.io.compress.Lz4Codec     |
+| Snappy   | org.apache.hadoop.io.compress.SnappyCodec  |
+
+
+
+- 压缩性能的比较
+
+| 压缩算法 | 原始文件大小 | 压缩文件大小 | 压缩速度 | 解压速度 |
+| -------- | ------------ | ------------ | -------- | -------- |
+| gzip     | 8.3GB        | 1.8GB        | 17.5MB/s | 58MB/s   |
+| bzip2    | 8.3GB        | 1.1GB        | 2.4MB/s  | 9.5MB/s  |
+| LZO      | 8.3GB        | 2.9GB        | 49.3MB/s | 74.6MB/s |
 
 
 
 ## 4-2 压缩配置参数
 
+- 要在Hadoop中启用压缩，可以配置如下参数（mapred-site.xml文件中）：
+
+- 请单独查询HIVE讲义 《第五章-Hive讲义》
+
 
 
 ## 4-3 开启Map输出阶段压缩
+
+- 开启map输出阶段压缩可以减少job中map和Reduce task间数据传输量。具体配置如下：
+
+案例实操：
+
+1）开启hive中间传输数据压缩功能
+
+``` sql
+hive(default)>set hive.exec.compress.intermediate=true;
+```
+
+
+
+2）开启mapreduce中map输出压缩功能
+
+``` sql
+hive (default)>set mapreduce.map.output.compress=true;
+```
+
+
+
+3）设置mapreduce中map输出数据的压缩方式
+
+``` sql
+hive (default)>set mapreduce.map.output.compress.codec= org.apache.hadoop.io.compress.SnappyCodec;
+```
+
+
 
 
 
 ## 4-4 开启Reduce输出阶段压缩
 
+​		当Hive将输出写入到表中时，输出内容同样可以进行压缩。属性hive.exec.compress.output控制着这个功能。用户可能需要保持默认设置文件中的默认值false，这样默认的输出就是非压缩的纯文本文件了。用户可以通过在查询语句或执行脚本中设置这个值为true，来开启输出结果压缩功能
 
+案例实操：
+
+``` sql
+-- 1）开启hive最终输出数据压缩功能
+set hive.exec.compress.output=true;
+
+-- 2）开启mapreduce最终输出数据压缩
+set mapreduce.output.fileoutputformat.compress=true;
+
+-- 3）设置mapreduce最终数据输出压缩方式
+set mapreduce.output.fileoutputformat.compress.codec = org.apache.hadoop.io.compress.SnappyCodec;
+
+-- 4）设置mapreduce最终数据输出压缩为块压缩
+set mapreduce.output.fileoutputformat.compress.type=BLOCK;
+
+-- 5）测试一下输出结果是否是压缩文件
+insert overwrite local directory '/export/data/exporthive/compress' select * from score distribute by sid sort by sscore desc;
+```
 
 
 
@@ -4490,7 +4719,29 @@ public class Myudf  extends UDF {
 
 ## 5-1 列式存储和行式存储
 
+- Hive支持的存储数的格式主要有：
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**TEXTFILE（行式存储） 、SEQUENCEFILE(行式存储)；**</span>
+  - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**ORC（列式存储）、PARQUET（列式存储）**</span>
+
 ![01-存储格式](E:\笔记\MyNotes\Notes\大数据\03-Hive\Hive命令\image\01-存储格式.png)
+
+
+
+- 行存储的特点： 
+
+``` properties
+	查询满足条件的一整行数据的时候，列存储则需要去每个聚集的字段找到对应的每个列的值，行存储只需要找到其中一个值，其余的值都在相邻地方，所以此时行存储查询的速度更快。
+```
+
+
+
+- 列存储的特点：
+
+``` properties
+	因为每个字段的数据聚集存储，在查询只需要少数几个字段的时候，能大大减少读取的数据量；每个字段的数据类型一定是相同的，列式存储可以针对性的设计更好的设计压缩算法。
+```
+
+​	<span style="color:red;background:white;font-size:20px;font-family:楷体;">**相比于行式存储，列式存储在分析场景下有着许多优良的特性:**</span>
 
 
 
@@ -4500,9 +4751,242 @@ public class Myudf  extends UDF {
 
 ## 5-2 主流文件存储格式对比实验
 
+- 存储文件的<span style="color:blue;background:white;font-size:20px;font-family:楷体;">**压缩比**</span>总结：
+  	<span style="color:red;background:white;font-size:20px;font-family:楷体;">**ORC >  Parquet >  textFile**</span>
+
+- 存储文件的<span style="color:blue;background:white;font-size:20px;font-family:楷体;">**查询速度**</span>总结：
+  	<span style="color:red;background:white;font-size:20px;font-family:楷体;">**ORC > TextFile > Parquet**</span>
+
+### 5-2-1 textFile
+
+- 创建表，存储数据格式为TEXTFILE  (STORED AS TEXTFILE )
+
+``` sql
+create table log_text (
+track_time string,
+url string,
+session_id string,
+referer string,
+ip string,
+end_user_id string,
+city_id string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+STORED AS TEXTFILE ;
+```
+
+- 向表中加载数据
+
+``` sql
+load data local inpath '/export/data/hivedatas/log.data' into table log_text ;
+```
+
+- 查看表中数据大小
+
+``` sql
+hadoop fs  -du -h /user/hive/warehouse/myhive.db/log_text;    
+```
+
+​	<span style="color:red;background:white;font-size:20px;font-family:楷体;">**18.1 M **</span> /user/hive/warehouse/log_text/log.data
+
+
+
+### 5-2-2 ORC
+
+- 创建表，存储数据格式为ORC  (STORED AS orc )
+
+``` sql
+create table log_orc(
+track_time string,
+url string,
+session_id string,
+referer string,
+ip string,
+end_user_id string,
+city_id string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+STORED AS orc ;
+```
+
+- 向表中加载数据 
+- 注意：<span style="color:red;background:white;font-size:20px;font-family:楷体;">**（指定存储数据格式的表 只能通过insert into 方式加载数据）**</span>
+
+``` sql
+insert into table log_orc select * from log_text ;
+```
+
+- 查看表中数据大小
+
+``` sh
+hadoop fs  -du -h /user/hive/warehouse/myhive.db/log_orc;
+```
+
+​	<span style="color:red;background:white;font-size:20px;font-family:楷体;">**2.8 M**</span>  /user/hive/warehouse/log_orc/123456_0
+
+
+
+
+
+### 5-2-3 Parquet
+
+- 创建表，存储数据格式为parquet
+
+``` sql
+create table log_parquet(
+track_time string,
+url string,
+session_id string,
+referer string,
+ip string,
+end_user_id string,
+city_id string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+STORED AS PARQUET ;
+```
+
+- 向表中加载数据 
+- 注意: <span style="color:red;background:white;font-size:20px;font-family:楷体;">**（指定存储数据格式的表 只能通过insert into 方式加载数据）**</span>
+
+``` sql
+insert into table log_parquet select * from log_text ;
+```
+
+- 查看表中数据大小
+
+``` shell
+hdoop fs  -du -h /user/hive/warehouse/myhive.db/log_parquet;
+```
+
+​	<span style="color:red;background:white;font-size:20px;font-family:楷体;">**13.1 M**</span>  /user/hive/warehouse/log_parquet/123456_0
+
+
+
+
+
+- 存储文件的查询速度测试：
+
+``` sql
+1）TextFile
+hive (default)> select count(*) from log_text;
+_c0
+100000
+Time taken: 21.54 seconds, Fetched: 1 row(s)
+
+
+2）ORC
+hive (default)> select count(*) from log_orc;
+_c0
+100000
+Time taken: 20.867 seconds, Fetched: 1 row(s)
+
+
+3）Parquet
+hive (default)> select count(*) from log_parquet;
+_c0
+100000
+Time taken: 22.922 seconds, Fetched: 1 row(s)
+
+```
+
+
+
 
 
 ## 5-3 存储和压缩结合
+
+
+
+- ORC存储方式的压缩：
+
+| Key                      | Default    | Notes                                                        |
+| ------------------------ | ---------- | ------------------------------------------------------------ |
+| orc.compress             | ZLIB       | high level compression (one of NONE, ZLIB, SNAPPY)           |
+| orc.compress.size        | 262,144    | number of bytes in each compression chunk                    |
+| orc.stripe.size          | 67,108,864 | number of bytes in each stripe                               |
+| orc.row.index.stride     | 10,000     | number of rows between index entries (must be >= 1000)       |
+| orc.create.index         | true       | whether to create row indexes                                |
+| orc.bloom.filter.columns | ""         | comma separated list of column names for which bloom filter should be created |
+| orc.bloom.filter.fpp     | 0.05       | false positive probability for bloom filter (must >0.0 and <1.0) |
+
+- 存储方式和压缩总结
+
+``` properties
+在实际的项目开发当中，hive表的数据存储格式一般选择：orc或parquet。压缩方式一般选择snappy。
+```
+
+
+
+### 5-3-1 创建一个非压缩的的ORC存储方式
+
+- 建表语句
+  - STORED AS orc tblproperties ("orc.compress"="NONE")
+
+``` sql
+create table log_orc_none(
+track_time string,
+url string,
+session_id string,
+referer string,
+ip string,
+end_user_id string,
+city_id string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+STORED AS orc tblproperties ("orc.compress"="NONE");
+```
+
+- 插入数据
+
+``` sql
+insert into table log_orc_none select * from log_text ;
+```
+
+- 查看插入后数据
+
+``` shell
+hadoop fs -du -h /user/hive/warehouse/myhive.db/log_orc_none;
+```
+
+​	<span style="color:red;background:white;font-size:20px;font-family:楷体;">**7.7 M**</span>  /user/hive/warehouse/log_orc_none/123456_0
+
+
+
+
+
+### 5-3-2 创建一个SNAPPY压缩的ORC存储方式
+
+- 建表语句
+  - STORED AS orc tblproperties ("orc.compress"="SNAPPY")
+
+``` sql
+create table log_orc_snappy(
+track_time string,
+url string,
+session_id string,
+referer string,
+ip string,
+end_user_id string,
+city_id string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+STORED AS orc tblproperties ("orc.compress"="SNAPPY");
+```
+
+- 插入数据
+
+``` sql
+insert into table log_orc_snappy select * from log_text ;
+```
+
+- 查看插入后数据
+
+``` shell
+hadoop fs  -du -h /user/hive/warehouse/myhive.db/log_orc_snappy ;
+```
+
+​	<span style="color:red;background:white;font-size:20px;font-family:楷体;">**3.8 M**</span>  /user/hive/warehouse/log_orc_snappy/123456_0
 
 
 

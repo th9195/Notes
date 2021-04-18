@@ -50,6 +50,14 @@ netstat -nltp
 
 
 
+### 查看某个端口挂在哪个进程上
+
+``` shell
+netstat -anp | grep 10000
+```
+
+
+
 ### systemctl命令
 
 ``` javascript
@@ -228,6 +236,21 @@ dd if=/dev/zero of=/export/data/testFile.txt bs=300M count=1
 [root@node1 data]# 
 
 
+```
+
+
+
+
+
+### nc(netcat)向某个端口发送数据
+
+``` properties
+# nc是netcat的简称，原本是用来设置路由器,我们可以利用它向某个端口发送数据
+# 安装 nc
+yum install -y nc
+
+# 启动客户端工具发送消息
+nc -lk 9999
 ```
 
 

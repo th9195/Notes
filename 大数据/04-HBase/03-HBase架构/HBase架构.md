@@ -2,9 +2,11 @@
 
 图片：
 
-​	E:\笔记\MyNotes\Notes\大数据\04-HBase\03-HBase架构\images\01-hbase集群架构.png
+​	images\01-hbase集群架构.png
 
-![01-hbase集群架构](E:\笔记\MyNotes\Notes\大数据\04-HBase\03-HBase架构\images\01-hbase集群架构.png)
+![01-hbase集群架构](images\01-hbase集群架构.png)
+
+
 
 # 2- HMaster 主节点
 
@@ -15,12 +17,6 @@
 - 管理所有的从节点；
 
 - 分配region; 
-
-
-
-
-
-
 
 
 

@@ -189,11 +189,11 @@ set hive.exec.orc.zerocopy=true; --是否开启读取零拷贝（只要有用字
 
 ### 2.2 union all的优化
 
-​	在进行join的数据倾斜优化的时候, 不管采用 运行时的, 还是编译时, 都是将能产生倾斜的key值, 单独拿出来, 使用一个单独MR进行处理, 处理后和之前结果进行union all 合并操作
+​		在进行join的数据倾斜优化的时候, 不管采用 运行时的, 还是编译时, 都是将能产生倾斜的key值, 单独拿出来, 使用一个单独MR进行处理, 处理后和之前结果进行union all 合并操作
 
-​	正常情况下, union all 也需要单独运行一个MR, 将两个结果进行合并, 出现到一个目标目录下
+​		正常情况下, union all 也需要单独运行一个MR, 将两个结果进行合并, 出现到一个目标目录下
 
-​	在跑一个MR 对效率也会产生影响, 能否不执行union all的合并操作呢, 直接让上面的MR 直接将结果输出的目的地
+​		在跑一个MR 对效率也会产生影响, 能否不执行union all的合并操作呢, 直接让上面的MR 直接将结果输出的目的地
 
 ```properties
 解决方案:
@@ -217,7 +217,7 @@ set hive.optimize.union.remove=true;  -- 开启 union all 的优化
 
 ![image-20210310082552321](images/image-20210310082552321.png)
 
-* 方案一:小规约  开启 map端的局部聚合操作
+* 方案一:<span style="color:red;background:white;font-size:20px;font-family:楷体;">**小规约  开启 map端的局部聚合操作（combiner）**</span>
   * 配置: **hive.map.aggr=true;**
   * 方案一原理流程图：
 
@@ -228,29 +228,35 @@ set hive.optimize.union.remove=true;  -- 开启 union all 的优化
 
 
 
-* 方案二: 大规约  运行两个MR , 第一个MR 进行局部聚合操作, 第二个MR 进行最终聚合操作
+* 方案二: <span style="color:red;background:white;font-size:20px;font-family:楷体;">**大规约  运行两个MR , 第一个MR 进行局部聚合操作, 第二个MR 进行最终聚合操作**</span>
 
   * 配置: **hive.groupby.skewindata=true;** 
 
-  * 使用的注意事项:
+  * 思想：
 
+    ``` properties
+    	当选项设定为 true，生成的查询计划会有两个MR Job。第一个MR Job中，Map的输出结果会随机分布到Reduce中，每个Reduce做部分聚合操作，并输出结果，这样处理的结果是相同的Group By Key有可能被分发到不同的Reduce中，从而达到负载均衡的目的；第二个MR Job再根据预处理的数据结果按照Group By Key分布到Reduce中（这个过程可以保证相同的Group By Key被分布到同一个Reduce中），最后完成最终的聚合操作。
+    ```
+  
+  * 使用的注意事项:
+  
     ```properties
     如果使用方案二进行group by 数据倾斜的解决, 要求sql中不允许出现多个列做distinct操作, 只能出现一次
-    
+  
     例如: 
-    	SELECT ip, count(DISTINCT uid), count(DISTINCT uname) FROMlog GROUP BY ip 
+  	SELECT ip, count(DISTINCT uid), count(DISTINCT uname) FROMlog GROUP BY ip 
     		此操作 就会直接报错, 因为此sql中出现多次distinct操作
-    		报错内容: DISTINCT on different columns notsupported with skew in data.
+  		报错内容: DISTINCT on different columns notsupported with skew in data.
     ```
 
   - 方案二原理流程图：
 
     第一个MR：先将所有的数据轮询一样分给两个reduce，这样就不会有数据倾斜；
-
+  
   ![image-20210310082823242](images/image-20210310082823242.png)
-
+  
      第二个MR : 将第一个MR的输出结果作为第二个MR的输入；
-
+  
   ![image-20210310083056000](images/image-20210310083056000.png)
 
 
@@ -259,9 +265,15 @@ set hive.optimize.union.remove=true;  -- 开启 union all 的优化
 
 - 总结：
 
-``` properties
-set hive.map.aggr=true; -- hive group by 数据倾斜 map端局部聚合优化
-set hive.groupby.skewindata=true; --hive的 group by 数据倾斜，使用两个MR的优化
+``` sql
+--（1）hive group by 数据倾斜 是否在Map端进行聚合，默认为True
+set hive.map.aggr = true;
+
+--（2）在Map端进行聚合操作的条目数目
+set hive.groupby.mapaggr.checkinterval = 100000;
+
+--（3）有数据倾斜的时候进行负载均衡（默认是false）  group by 数据倾斜，使用两个MR的优化
+set hive.groupby.skewindata = true;
 ```
 
 
@@ -281,7 +293,7 @@ set hive.optimize.correlation=true;
 
 
 
-总结
+### 2.5 总结
 
 ```properties
 -- 以下是hive的并行优化
@@ -338,7 +350,7 @@ set hive.optimize.correlation=true; -- hive的关联优化器 减少shuffle次�
 
   
 
-###  原始索引 -- 不推荐使用
+###  3.1 原始索引 -- 不推荐使用
 
 * 特点：
 * <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**索引表不会自动更新**</span>；
@@ -354,7 +366,7 @@ set hive.optimize.correlation=true; -- hive的关联优化器 减少shuffle次�
 
 
 
-### Row Group Index: 行组索引
+### 3.2 Row Group Index: 行组索引
 
 ![wps2](images/wps2-1615530683381.png)
 
@@ -408,7 +420,7 @@ TBLPROPERTIES
 
 
 
-### Bloom Filter Index:  开发过滤索引
+### 3.3 Bloom Filter Index:  开发过滤索引
 
 - 过程描述：
 
@@ -454,7 +466,7 @@ DISTRIBUTE BY id sort BY id;
 
 
 
-### hive的索引优化总结
+### 3.4 hive的索引优化总结
 
 - 空间换时间的操作；
 
@@ -463,4 +475,186 @@ DISTRIBUTE BY id sort BY id;
 ```properties
  将那些经过被作为where条件或者是join条件的等值连接的字段, 作为开发过滤索引的字段。 
 ```
+
+
+
+## 4.本地模式
+
+​		大多数的Hadoop Job是需要Hadoop提供的完整的可扩展性来处理大数据集的。<span style="color:red;background:white;font-size:20px;font-family:楷体;">**不过，有时Hive的输入数据量是非常小的**</span>。在这种情况下，为查询触发执行任务时消耗可能会比实际job的执行时间要多的多。对于大多数这种情况，<span style="color:blue;background:white;font-size:20px;font-family:楷体;">**Hive可以通过本地模式在单台机器上处理所有的任务**</span>。对于小数据集，执行时间可以明显被缩短。
+
+​		用户可以通过设置hive.exec.mode.local.auto的值为true，来让Hive在适当的时候自动启动这个优化。
+
+``` sql
+set hive.exec.mode.local.auto=true;  --开启本地mr
+
+
+--设置local mr的最大输入数据量,当输入数据量小于这个值时采用local MR的方式，默认为134217728，即128M
+set hive.exec.mode.local.auto.inputbytes.max=51234560; -- 512M
+
+
+--设置local mr的最大输入文件个数，当输入文件个数小于这个值时采用local mr的方式，默认为4
+set hive.exec.mode.local.auto.input.files.max=10;
+```
+
+## 5.空key过滤-转换
+
+### 5.1空key 过滤
+
+​		有时join超时是因为某些key对应的数据太多，而相同key对应的数据都会发送到相同的reducer上，从而导致内存不够。此时我们应该仔细分析这些异常的key，很多情况下，这些key对应的数据是异常数据，我们需要在SQL语句中进行过滤。例如key对应的字段为空，操作如下：
+
+- 主要思想：
+
+``` properties
+当有过滤清洗的时候， 过滤只涉及到单独表中的条件，可以使用子查询的方法先过滤掉数据再去做join操作;
+```
+
+- 不过滤
+
+``` sql
+INSERT OVERWRITE TABLE jointable
+SELECT a.* FROM nullidtable a JOIN ori b ON a.id = b.id;
+结果：
+No rows affected (152.135 seconds)
+```
+
+- 过滤
+
+``` sql
+INSERT OVERWRITE TABLE jointable
+SELECT a.* FROM (SELECT * FROM nullidtable WHERE id IS NOT NULL ) a JOIN ori b ON a.id = b.id;
+结果：
+No rows affected (141.585 seconds)
+```
+
+### 5.2 空key 转换
+
+​		空key 过滤的处理方案是清洗掉这些数据， 但是有时这些数据时有用的就可以使用空key 转换的方案处理；
+
+​		有时虽然某个key为空对应的数据很多，但是相应的数据不是异常数据，必须要包含在join的结果中，此时我们可以表a中key为空的字段赋一个随机的值，使得数据随机均匀地分不到不同的reducer上。例如：
+
+
+
+- 设计思想：
+
+``` properties
+当key值为空的时候添加一个key 值;
+
+1) 不随机分布:当key 为空时，直接设置为一个固定的key值，如 hive;
+	缺点:这样的后果就是所有为null值的id全部都变成了相同的字符串，及其容易造成数据的倾斜（所有的key相同，相同key的数据会到同一个reduce当中去）
+	
+2) 随机分布:当key 为空时，直接设置为一个固定的key值 + 随机值，如 hive + rand();
+	
+```
+
+
+
+#### 不随机分布:
+
+``` sql
+set hive.exec.reducers.bytes.per.reducer=32123456;
+set mapreduce.job.reduces=7;
+INSERT OVERWRITE TABLE jointable
+SELECT a.*
+FROM nullidtable a
+LEFT JOIN ori b 
+	ON 
+		CASE WHEN 
+			a.id IS NULL 
+		THEN 
+			'hive' 
+		ELSE 
+			a.id END = b.id;
+
+No rows affected (41.668 seconds)   52.477
+```
+
+
+
+#### 随机分布:
+
+``` sql
+set hive.exec.reducers.bytes.per.reducer=32123456;
+set mapreduce.job.reduces=7;
+INSERT OVERWRITE TABLE jointable
+SELECT a.*
+FROM nullidtable a
+LEFT JOIN ori b ON CASE WHEN a.id IS NULL THEN concat('hive', rand()) ELSE a.id END = b.id;
+
+
+No rows affected (42.594 seconds)
+```
+
+
+
+## 6.Count(distinct)
+
+​		数据量小的时候无所谓，数据量大的情况下，<span style="color:red;background:white;font-size:20px;font-family:楷体;">**由于COUNT DISTINCT操作需要用一个Reduce Task来完成**</span>，这一个Reduce需要处理的数据量太大，就会导致整个Job很难完成，<span style="color:red;background:white;font-size:20px;font-family:楷体;">**一般COUNT DISTINCT使用先GROUP BY再COUNT的方式替换**</span>：
+
+``` sql
+SELECT count(id) FROM (SELECT id FROM bigtable GROUP BY id) a;
+```
+
+缺点：<span style="color:blue;background:white;font-size:20px;font-family:楷体;">**多了一个MR，但在数据量大的情况下，这个绝对是值得的。**</span>
+
+
+
+
+
+## 7.严格模式
+
+- Hive提供了一个严格模式，可以防止用户执行那些可能意向不到的不好的影响的查询。
+
+- 开启关闭严格模式
+
+  ``` sql
+  set hive.mapred.mode = strict;  --开启严格模式
+  set hive.mapred.mode = nostrict; --开启非严格模式
+  ```
+
+- 配置文件
+
+  ``` xml
+  <property>
+      <name>hive.mapred.mode</name>
+      <value>strict</value>
+  </property>
+  ```
+
+- 限制操作：
+
+  - 限制笛卡尔积的查询
+
+    ``` properties
+    	对关系型数据库非常了解的用户可能期望在执行JOIN查询的时候不使用ON语句而是使用where语句，这样关系数据库的执行优化器就可以高效地将WHERE语句转化成那个ON语句。不幸的是，Hive并不会执行这种优化，因此，如果表足够大，那么这个查询就会出现不可控的情况。
+    ```
+
+    
+
+  - order by  后面必须加上 limit;
+
+    ``` properties
+    	对于使用了order by语句的查询，要求必须使用limit语句。因为order by为了执行排序过程会将所有的结果数据分发到同一个Reducer中进行处理，强制要求用户增加这个LIMIT语句可以防止Reducer额外执行很长一段时间。
+    ```
+
+    
+
+  - 对于分区表，在where语句中必须含有分区字段作为过滤条件来限制范围，否则不允许执行;
+
+    ``` properties
+    	对于分区表，在where语句中必须含有分区字段作为过滤条件来限制范围，否则不允许执行。换句话说，就是用户不允许扫描所有分区。进行这个限制的原因是，通常分区表都拥有非常大的数据集，而且数据增加迅速。没有进行分区限制的查询可能会消耗令人不可接受的巨大资源来处理这个表。
+    ```
+
+
+
+## 8.存储方式和压缩方式
+
+- 大数据场景下存储格式压缩格式尤为关键；
+
+- 优点：
+  - 可以提升计算速度；
+  - 减少存储空间；
+  - 降低网络io；
+  - 磁盘io；
+
+
 

@@ -69,7 +69,24 @@ insert into stu values(1,"Tom");
 
 ## 第三种交互方式：Beeline Client
 
-- hive经过发展，推出了第二代客户端beeline，但是beeline客户端不是直接访问metastore服务的，而是需要单独启动hiveserver2服务。
+``` properties
+方式一：交互式命令行（CLI）
+	bin/hive，编写SQL语句及DDL语句
+
+方式二：启动服务HiveServer2（Hive ThriftServer2)
+	将Hive当做一个服务启动(类似MySQL数据库，启动一个服务)，端口为10000
+	1)、交互式命令行，bin/beeline，CDH 版本HIVE建议使用此种方式，CLI方式过时
+	2)、JDBC/ODBC方式，类似MySQL中JDBC/ODBC方式
+
+```
+
+
+
+- hive经过发展，推出了第二代客户端beeline，但是beeline客户端不是直接访问metastore服务的，而是需要单独启动hiveserver2服务 ;
+
+- hiveserver2 提供了 一个服务thrift, **默认端口是10000**。(hiveserver2: thrift:10000端口)
+
+  ![image-20210412092408978](images/image-20210412092408978.png)
 
 - 在node1的/export/server/hadoop-2.7.5/etc/hadoop目录下，修改core-site.xml，在该文件中添加以下配置,实现用户代理:
 
