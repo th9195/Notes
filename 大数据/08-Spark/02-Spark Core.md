@@ -1,3 +1,7 @@
+[TOC]
+
+
+
 # 1- RDD详解
 
 
@@ -99,7 +103,7 @@ RDD分布式集合	|	HDFS分布式存储
 
 
 
-- Optionally, a Partitioner for key-value RDDs (e.g. to say that the RDD is hash-partitioned)
+- 第四个：Optionally, a Partitioner for key-value RDDs (e.g. to say that the RDD is hash-partitioned)
   - 可选项,对于KeyValue类型的RDD会有一个Partitioner，即RDD的分区函数；
   - 当前Spark中实现了两种类型的分区函数，一个是基于哈希的HashPartitioner，另外一个是基于范围的RangePartitioner。
   - 只有对于于key-value的RDD，才会有Partitioner，非key-value的RDD的Parititioner的值是None。
@@ -2321,7 +2325,23 @@ object Demo2_SparkRDDExample {
 
 ### 8-1-1窄依赖（Narrow Dependency）
 
+​		窄依赖中：**即父 RDD 与子 RDD 间的分区是一对一的**。换句话说父RDD中，一个分区内的数据是不能被分割的，只能由子RDD中的一个分区整个利用。
+
+![image-20210422111953147](images/image-20210422111953147.png)
+
+​		上图中 P代表 RDD中的每个分区（Partition），我们看到，RDD 中每个分区内的数据在上面的几种转移操作之后被一个分区所使用，即其依赖的父分区只有一个。比如图中的 map、union 和 join 操作，都是窄依赖的。注意，join 操作比较特殊，可能同时存在宽、窄依赖。
+
+
+
 ### 8-1-2 Shuffle 依赖（宽依赖 Wide Dependency）
+
+​		Shuffle 有“洗牌、搅乱”的意思，这里所谓的 **Shuffle 依赖也会打乱原 RDD 结构的操作**。具体来说，**父 RDD 中的分区可能会被多个子 RDD 分区使用**。因为父 RDD 中一个分区内的数据会被分割并发送给子 RDD 的所有分区，因此 Shuffle 依赖也意味着父 RDD与子 RDD 之间存在着 Shuffle 过程。
+
+![image-20210422133814425](images/image-20210422133814425.png)
+
+​		上图中 P 代表 RDD 中的多个分区，我们会发现对于 Shuffle 类操作而言，结果 RDD 中的每个分区可能会依赖多个父 RDD 中的分区。需要说明的是，依赖关系是 RDD 到 RDD 之间的一种映射关系，是两个 RDD 之间的依赖，如果在一次操作中涉及多个父 RDD，也有可能同时包含窄依赖和 Shuffle 依赖。
+
+
 
 ### 8-1-3 如何区分宽窄依赖
 
@@ -2483,8 +2503,6 @@ The following table summarizes terms you’ll see used to refer to cluster conce
  
 
 为什么可以内存传输或者网络直传呢？
-
- 
 
 - Spark的最小执行单位是Task也就是单个线程。Task运行在Executor内。一个节点可以有多个Executor，一个集群可以有多个节点。
 

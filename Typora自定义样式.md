@@ -16,29 +16,9 @@ xxxxxxx
 
 
 
+# 2- 流程图
 
-
-# 2- 加粗
-
-- 格式
-
-``` html
-<b>xxxxx </b>
-```
-
-- 案例
-
-<b>加粗</b>
-
-
-
-
-
-
-
-# 3- 流程图
-
-## 3-1 样式一：
+## 2-1 样式一：
 
 ``` flow
 st=>start: 开始框
@@ -62,7 +42,7 @@ cond(yes)->io->e
 cond(no)->sub1(right)->op
 ```
 
-## 3-2 样式二
+## 2-2 样式二
 
 ``` flow
 st=>start: 开始框
@@ -84,9 +64,9 @@ cond(yes)->io(bottom)->e
 cond(no)->sub1(right)->op
 ```
 
-# 4- UML时序图
+# 3- UML时序图
 
-## 4-1 样式一：
+## 3-1 样式一：
 
 ``` sequence
 对象A->对象B: 对象B你好吗?（请求）
@@ -127,7 +107,7 @@ Server --> Client : accept
 
 ```
 
-## 4-2 样式二
+## 3-2 样式二
 
 ``` sequence
 Title: 标题：复杂使用
@@ -153,7 +133,72 @@ participant C
 Note right of C: 没人陪我玩
 ```
 
-# 5- 思维导图
+# 4- 思维导图
 
-## 5-1 样式一
+## 4-1 样式一
+
+
+
+
+
+# 5-生成目录：
+
+``` properties
+[TOC] + 按回车
+```
+
+
+
+# 6- 快捷键
+
+``` properties
+windows快捷键：#
+无序列表：输入-之后输入空格
+有序列表：输入数字+“.”之后输入空格
+任务列表：-[空格]空格 文字
+标题：ctrl+数字
+表格：ctrl+t
+生成目录：[TOC]按回车
+选中一整行：ctrl+l
+选中单词：ctrl+d
+选中相同格式的文字：ctrl+e
+跳转到文章开头：ctrl+home
+跳转到文章结尾：ctrl+end
+搜索：ctrl+f
+替换：ctrl+h
+引用：输入>之后输入空格
+代码块：ctrl+alt+f
+加粗：ctrl+b
+倾斜：ctrl+i
+下划线：ctrl+u
+删除线：alt+shift+5
+插入图片：直接拖动到指定位置即可或者ctrl+shift+i
+插入链接：ctrl + k
+```
+
+
+
+# 7- 表情
+
+输出表情需要借助 `：`符号。
+
+栗子：`:smile` 显示为 😄,记住是左右两边都要冒号。
+
+使用者可以通过使用`ESC`键触发表情建议补全功能，也可在功能面板启用后自动触发此功能。同时，直接从菜单栏`Edit` -> `Emoji & Symbols`插入UTF8表情符号也是可以的。
+
+或者使用下面的方法
+
+访问网站 https://emojikeyboard.org/，找到需要的符号，鼠标左键单击，然后粘贴到需要的地方就行了！🆗
+
+
+
+# 8- 链接
+
+<a href="http://baidu.com" target="_blank">link</a>
+
+``` properties
+<a href="http://baidu.com" target="_blank">link</a>
+```
+
+
 

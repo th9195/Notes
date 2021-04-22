@@ -1,3 +1,7 @@
+[TOC]
+
+
+
 # 1- Spark Streaming概述
 
 ​		在传统的数据处理过程中，我们往往先将**数据存入数据库**中，当需要的时候再去数据库中进行检索查询，将处理的结果返回给请求的用户；另外，MapReduce 这类大数据处理框架，更多应用在离线计算场景中。而对于一些实时性要求较高的场景，我们期望延迟在秒甚至毫秒级别，就需要引出一种新的数据计算结构——**流式计算**，对**无边界的数据进行连续不断的处理、聚合和分析**。
@@ -1115,6 +1119,37 @@ Kafka 框架架构图如下所示：
 
 #### 4-3-2-1 原理
 
+目前企业中基本都使用New Consumer API集成，优势如下：
+
+
+
+- **1- Direst方式**
+  - 直接到Kafka Topic中依据偏移量范围获取数据，进行处理分析；
+  - The Spark Streaming integration for Kafka 0.10 is similar in design to the 0.8 Direct Stream approach；
+
+- **2- 简单的并行度1 : 1**
+  - 每批次中RDD的分区与Topic分区一对一关系；
+  - It provides simple parallelism, 1:1 correspondence between Kafka partitions and Spark partitions, and access to offsets and metadata；
+  - 获取Topic中数据的同时，还可以获取偏移量和元数据信息；
+
+ 
+
+![img](images/wps1-1618759019948.jpg) 
+
+​		采用Direct方式消费数据时，可以设置每批次处理数据的最大量，防止【波峰】时数据太多，导致批次数据处理有性能问题：
+
+- 参数：**spark.streaming.kafka.maxRatePerPartition**
+
+- 含义：**Topic中每个分区每秒中消费数据的最大值**
+
+- 举例说明：
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**BatchInterval：5s、Topic-Partition：3、maxRatePerPartition： 10000**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**最大消费数据量：10000 * 3 * 5 = 150000 条**</span>
+
+
+
+#### 4-3-2-2 API
+
 http://spark.apache.org/docs/latest/streaming-kafka-0-10-integration.html#obtaining-offsets
 
 添加相关Maven依赖：
@@ -1127,11 +1162,340 @@ http://spark.apache.org/docs/latest/streaming-kafka-0-10-integration.html#obtain
 </dependency>
 ```
 
-
-
- 
+![image-20210418231054714](images/image-20210418231054714.png)
 
  
+
+####  4-3-2-3 代码实现-自动提交偏移量到默认主题
+
+``` scala
+package cn.itcast.streaming
+
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.spark.streaming.dstream.{DStream, InputDStream}
+import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils, LocationStrategies}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+/**
+ * Author itcast
+ * Desc 使用spark-streaming-kafka-0-10版本中的Direct模式连接Kafka并自动提交偏移量
+ */
+object SparkStreaming_Kafka_01 {
+  def main(args: Array[String]): Unit = {
+    //1.准备SparkStreaming执行环境--StreamingContext
+    val conf: SparkConf = new SparkConf()
+      .setAppName(this.getClass.getSimpleName.stripSuffix("$"))
+      .setMaster("local[*]")
+      
+    val sc: SparkContext = new SparkContext(conf)
+    sc.setLogLevel("WARN")
+    val ssc: StreamingContext = new StreamingContext(sc, Seconds(5))
+
+    //2.准备Kafka的连接参数,如集群地址,主题,消费者组名称,是否自动提交,offset重置位置,kv序列化
+    val kafkaParams = Map[String, Object](
+      "bootstrap.servers" -> "node1:9092,node2:9092,node3:9092",//集群地址
+      "key.deserializer" -> classOf[StringDeserializer],//key的反序列化规则
+      "value.deserializer" -> classOf[StringDeserializer],//value的反序列化规则
+      "group.id" -> "spark",//消费者组名称
+      //earliest:表示如果有offset记录从offset记录开始消费,如果没有从最早的消息开始消费
+      //latest:表示如果有offset记录从offset记录开始消费,如果没有从最后/最新的消息开始消费
+      //none:表示如果有offset记录从offset记录开始消费,如果没有就报错
+      "auto.offset.reset" -> "latest",//offset重置位置
+      "auto.commit.interval.ms"->"1000",//自动提交的时间间隔
+      "enable.auto.commit" -> (true: java.lang.Boolean)//是否自动提交偏移量
+    )
+    val topics = Array("spark_kafka")//要消费哪个主题
+
+    //3.使用spark-streaming-kafka-0-10中的Direct模式连接Kafka
+    // ssc: StreamingContext,
+    // locationStrategy: LocationStrategy,位置策略,直接使用源码推荐的优先一致性策略即可,在大多数情况下，它将一致地在所有执行器之间分配分区
+    // consumerStrategy: ConsumerStrategy[K, V],消费策略,直接使用源码推荐的订阅模式,通过参数订阅主题即可
+    //kafkaDS就是从Kafka中消费到的完整的消息记录!
+    val kafkaDS: InputDStream[ConsumerRecord[String, String]] = KafkaUtils
+      .createDirectStream[String, String](
+          ssc,
+          LocationStrategies.PreferConsistent,
+          ConsumerStrategies.Subscribe[String, String](topics, kafkaParams)
+        )
+
+    //4.从kafkaDS中获取发送的value
+    val valuesDS: DStream[String] = kafkaDS.map(_.value)
+
+    //5.输出
+    valuesDS.print()
+
+    //6.启动并等待结束
+    ssc.start()
+    ssc.awaitTermination()
+    ssc.stop(stopSparkContext = true, stopGracefully = true)
+
+    //注意:
+    //1.启动kafka
+    //2.准备主题:/export/server/kafka/bin/kafka-topics.sh --create --zookeeper node1:2181 --replication-factor 1 --partitions 3 --topic spark_kafka
+    //3.开启控制台生产者:/export/server/kafka/bin/kafka-console-producer.sh --broker-list node1:9092 --topic spark_kafka
+
+  }
+}
+```
+
+
+
+#### 4-3-2-4 代码实现-手动提交偏移量到默认主题
+
+``` scala
+package cn.itcast.streaming
+
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.spark.streaming.dstream.{DStream, InputDStream}
+import org.apache.spark.streaming.kafka010.{CanCommitOffsets, ConsumerStrategies, HasOffsetRanges, KafkaUtils, LocationStrategies, OffsetRange}
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.{SparkConf, SparkContext}
+
+/**
+ * Author itcast
+ * Desc 使用spark-streaming-kafka-0-10版本中的Direct模式连接Kafka并手动提交偏移量
+ */
+object SparkStreaming_Kafka_02 {
+  def main(args: Array[String]): Unit = {
+    //1.准备SparkStreaming执行环境--StreamingContext
+    val conf: SparkConf = new SparkConf()
+      .setAppName(this.getClass.getSimpleName.stripSuffix("$"))
+      .setMaster("local[*]")
+      
+    val sc: SparkContext = new SparkContext(conf)
+    sc.setLogLevel("WARN")
+    val ssc: StreamingContext = new StreamingContext(sc, Seconds(5))
+
+    //2.准备Kafka的连接参数,如集群地址,主题,消费者组名称,是否自动提交,offset重置位置,kv序列化
+    val kafkaParams = Map[String, Object](
+      "bootstrap.servers" -> "node1:9092,node2:9092,node3:9092",//集群地址
+      "key.deserializer" -> classOf[StringDeserializer],//key的反序列化规则
+      "value.deserializer" -> classOf[StringDeserializer],//value的反序列化规则
+      "group.id" -> "spark",//消费者组名称
+      //earliest:表示如果有offset记录从offset记录开始消费,如果没有从最早的消息开始消费
+      //latest:表示如果有offset记录从offset记录开始消费,如果没有从最后/最新的消息开始消费
+      //none:表示如果有offset记录从offset记录开始消费,如果没有就报错
+      "auto.offset.reset" -> "latest",//offset重置位置
+      //"auto.commit.interval.ms"->"1000",//自动提交的时间间隔
+      "enable.auto.commit" -> (false: java.lang.Boolean)//是否自动提交偏移量
+    )
+    val topics = Array("spark_kafka")//要消费哪个主题
+
+
+    //3.使用spark-streaming-kafka-0-10中的Direct模式连接Kafka
+    // ssc: StreamingContext,
+    // locationStrategy: LocationStrategy,位置策略,直接使用源码推荐的优先一致性策略即可,在大多数情况下，它将一致地在所有执行器之间分配分区
+    // consumerStrategy: ConsumerStrategy[K, V],消费策略,直接使用源码推荐的订阅模式,通过参数订阅主题即可
+    //kafkaDS就是从Kafka中消费到的完整的消息记录!
+    val kafkaDS: InputDStream[ConsumerRecord[String, String]] = KafkaUtils
+      .createDirectStream[String, String](
+          ssc,
+          LocationStrategies.PreferConsistent,
+          ConsumerStrategies.Subscribe[String, String](topics, kafkaParams)
+        )
+
+    //4.处理从Kafka中消费到的value
+    //手动提交偏移量的时机:
+    //1.每隔一段时间提交一次:可以,但是和自动提交一样了,那还不如直接自动提交!
+    //2.消费一条消息就提交一次offset:可以但是提交的太频繁了,可能会影响效率!除非对数据安全要求特别高!
+    //3.消费一小批消息就提交一次offset:可以!一小批数据在SparkStreaming里面就是DStream底层的RDD(微批)!
+    kafkaDS.foreachRDD(rdd=>{
+      //该如何消费/处理就如何消费/处理
+      //完事之后就应该提交该批次的offset!
+      if(!rdd.isEmpty()){//当前批次的rdd不为空,那么就消费该批次数据并提交偏移量
+        rdd.foreach(r=>{
+          println(s"消费到的消息记录的分区为:${r.partition()},offset为:${r.offset()},key为:${r.key()},value为:${r.value()}")
+        })
+          
+        //代码走到这里说明该批次数据已经消费并处理了,那么应该手动提交偏移量了!
+        //要手动提交的偏移量信息都在rdd中,但是我们要提交的仅仅是offset相关的信息,所以将rdd转为方便我们提交的Array[OffsetRange]类型
+        val offsetRanges: Array[OffsetRange] = rdd.asInstanceOf[HasOffsetRanges]
+          .offsetRanges
+        
+        //上面的offsetRanges数组中就记录了各个分区的偏移量信息!
+        offsetRanges.foreach(o=>{
+          println(s"offsetRanges中记录的分区为:${o.partition},开始offset为:${o.fromOffset},结束offset为${o.untilOffset}")
+        })
+        //手动提交--提交到Kafka的默认主题中!(注:如果设置了Checkpoint,还会储存一份到Checkpoint中)
+        kafkaDS.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
+        println("当前批次的offset已经提交到默认主题中")
+      }
+    })
+
+    //5.输出
+
+    //6.启动并等待结束
+    ssc.start()
+    ssc.awaitTermination()
+    ssc.stop(stopSparkContext = true, stopGracefully = true)
+
+    //注意:
+    //1.启动kafka
+    //2.准备主题:/export/server/kafka/bin/kafka-topics.sh --create --zookeeper node1:2181 --replication-factor 1 --partitions 3 --topic spark_kafka
+    //3.开启控制台生产者:/export/server/kafka/bin/kafka-console-producer.sh --broker-list node1:9092 --topic spark_kafka
+
+  }
+}
+```
+
+
+
+#### 4-3-2-5 代码实现-手动提交偏移量到MySQL-扩展
+
+``` scala
+package cn.itcast.streaming
+
+import java.sql.{DriverManager, ResultSet}
+
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.TopicPartition
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.spark.streaming.dstream.InputDStream
+import org.apache.spark.streaming.kafka010._
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.collection.mutable
+
+/**
+ * Author itcast
+ * Desc 使用spark-streaming-kafka-0-10版本中的Direct模式连接Kafka并手动提交偏移量到MySQL
+ */
+object SparkStreaming_Kafka_03 {
+  def main(args: Array[String]): Unit = {
+    //1.准备SparkStreaming执行环境--StreamingContext
+    val conf: SparkConf = new SparkConf().setAppName(this.getClass.getSimpleName.stripSuffix("$")).setMaster("local[*]")
+    val sc: SparkContext = new SparkContext(conf)
+    sc.setLogLevel("WARN")
+    val ssc: StreamingContext = new StreamingContext(sc, Seconds(5))
+
+    //2.准备Kafka的连接参数,如集群地址,主题,消费者组名称,是否自动提交,offset重置位置,kv序列化
+    val kafkaParams = Map[String, Object](
+      "bootstrap.servers" -> "node1:9092,node2:9092,node3:9092", //集群地址
+      "key.deserializer" -> classOf[StringDeserializer], //key的反序列化规则
+      "value.deserializer" -> classOf[StringDeserializer], //value的反序列化规则
+      "group.id" -> "spark", //消费者组名称
+      //earliest:表示如果有offset记录从offset记录开始消费,如果没有从最早的消息开始消费
+      //latest:表示如果有offset记录从offset记录开始消费,如果没有从最后/最新的消息开始消费
+      //none:表示如果有offset记录从offset记录开始消费,如果没有就报错
+      "auto.offset.reset" -> "latest", //offset重置位置
+      //"auto.commit.interval.ms"->"1000",//自动提交的时间间隔
+      "enable.auto.commit" -> (false: java.lang.Boolean) //是否自动提交偏移量
+    )
+    val topics = Array("spark_kafka") //要消费哪个主题
+
+    //3.使用spark-streaming-kafka-0-10中的Direct模式连接Kafka
+    //连接kafka之前,要先去MySQL看下有没有该消费者组的offset记录,如果有从记录的位置开始消费,如果没有从"auto.offset.reset" -> "latest"位置开始消费!
+    //Map[主题分区为key, offset为value]
+    val offsetMap: mutable.Map[TopicPartition, Long] = OffsetUtil.getOffsetMap("spark", "spark_kafka")
+    val kafkaDS: InputDStream[ConsumerRecord[String, String]] = if (offsetMap.size > 0) {
+      println("MySQL中有记录该消费者消费该主题的各个分区的offset信息,所以接着该记录开始消费")
+      KafkaUtils.createDirectStream[String, String](
+        ssc,
+        LocationStrategies.PreferConsistent,
+        ConsumerStrategies.Subscribe[String, String](topics, kafkaParams, offsetMap)
+      )
+    } else {
+      println("MySQL没有记录该消费者消费该主题的各个分区的offset信息,所以从auto.offset.reset配置的latest开始消费")
+      KafkaUtils.createDirectStream[String, String](
+        ssc,
+        LocationStrategies.PreferConsistent,
+        ConsumerStrategies.Subscribe[String, String](topics, kafkaParams)
+      )
+    }
+
+    //4.处理从Kafka中消费到的value
+    //手动提交偏移量的时机:
+    //1.每隔一段时间提交一次:可以,但是和自动提交一样了,那还不如直接自动提交!
+    //2.消费一条消息就提交一次offset:可以但是提交的太频繁了,可能会影响效率!除非对数据安全要求特别高!
+    //3.消费一小批消息就提交一次offset:可以!一小批数据在SparkStreaming里面就是DStream底层的RDD(微批)!
+    kafkaDS.foreachRDD(rdd => {
+      //该如何消费/处理就如何消费/处理
+      //完事之后就应该提交该批次的offset!
+      if (!rdd.isEmpty()) { //当前批次的rdd不为空,那么就消费该批次数据并提交偏移量
+        rdd.foreach(r => {
+          println(s"消费到的消息记录的分区为:${r.partition()},offset为:${r.offset()},key为:${r.key()},value为:${r.value()}")
+        })
+        //代码走到这里说明该批次数据已经消费并处理了,那么应该手动提交偏移量了!
+        //要手动提交的偏移量信息都在rdd中,但是我们要提交的仅仅是offset相关的信息,所以将rdd转为方便我们提交的Array[OffsetRange]类型
+        val offsetRanges: Array[OffsetRange] = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+        //上面的offsetRanges数组中就记录了各个分区的偏移量信息!
+        offsetRanges.foreach(o => {
+          println(s"offsetRanges中记录的分区为:${o.partition},开始offset为:${o.fromOffset},结束offset为${o.untilOffset}")
+        })
+        //手动提交--提交到Kafka的默认主题中!(注:如果设置了Checkpoint,还会储存一份到Checkpoint中)
+        //kafkaDS.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
+        OffsetUtil.saveOffsetRanges("spark", offsetRanges)
+        println("当前批次的offset已经提交到MySQL中")
+      }
+    })
+
+    //5.输出
+
+    //6.启动并等待结束
+    ssc.start()
+    ssc.awaitTermination()
+    ssc.stop(stopSparkContext = true, stopGracefully = true)
+
+    //注意:
+    //1.启动kafka
+    //2.准备主题:/export/server/kafka/bin/kafka-topics.sh --create --zookeeper node1:2181 --replication-factor 1 --partitions 3 --topic spark_kafka
+    //3.开启控制台生产者:/export/server/kafka/bin/kafka-console-producer.sh --broker-list node1:9092 --topic spark_kafka
+
+  }
+
+  /*
+  手动维护offset的工具类
+  首先在MySQL创建如下表
+    CREATE TABLE `t_offset` (
+      `topic` varchar(255) NOT NULL,
+      `partition` int(11) NOT NULL,
+      `groupid` varchar(255) NOT NULL,
+      `offset` bigint(20) DEFAULT NULL,
+      PRIMARY KEY (`topic`,`partition`,`groupid`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+   */
+  object OffsetUtil {
+    //1.将偏移量保存到数据库
+    def saveOffsetRanges(groupid: String, offsetRange: Array[OffsetRange]) = {
+      val connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/bigdata?characterEncoding=UTF-8", "root", "root")
+      //replace into表示之前有就替换,没有就插入
+      val ps = connection.prepareStatement("replace into t_offset (`topic`, `partition`, `groupid`, `offset`) values(?,?,?,?)")
+      for (o <- offsetRange) {
+        ps.setString(1, o.topic)
+        ps.setInt(2, o.partition)
+        ps.setString(3, groupid)
+        ps.setLong(4, o.untilOffset)
+        ps.executeUpdate()
+      }
+      ps.close()
+      connection.close()
+    }
+    
+    //2.从数据库读取偏移量
+    def getOffsetMap(groupid: String, topic: String) = {
+      val connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/bigdata?characterEncoding=UTF-8", "root", "root")
+      val ps = connection.prepareStatement("select * from t_offset where groupid=? and topic=?")
+      ps.setString(1, groupid)
+      ps.setString(2, topic)
+      val rs: ResultSet = ps.executeQuery()
+      val offsetMap = mutable.Map[TopicPartition, Long]()
+      while (rs.next()) {
+        offsetMap += new TopicPartition(rs.getString("topic"), rs.getInt("partition")) -> rs.getLong("offset")
+      }
+      rs.close()
+      ps.close()
+      connection.close()
+      offsetMap
+    }
+  }
+}
+```
+
+
 
 
 
@@ -1141,9 +1505,137 @@ http://spark.apache.org/docs/latest/streaming-kafka-0-10-integration.html#obtain
 
 # 5- 扩展阅读
 
+## 5-1 流式计算架构发展
+
+经过这么多年的发展，
+
+大数据已经从大数据1.0的BI/Datawarehouse时代，
+
+经过大数据2.0的Web/APP过渡，
+
+进入到了IOT的大数据3.0时代，而随之而来的是数据架构的变化。
 
 
-## 5-2状态计算
+
+### 5-1-1 Lambda架构
+
+​		在过去Lambda数据架构成为每一个公司大数据平台必备的架构，它解决了一个公司大数据批量离线处理和实时数据处理的需求。一个典型的Lambda架构如下：
+
+![img](images/wps5-1618759426872.jpg) 
+
+![img](images/wps6-1618759426873.jpg)![img](images/wps7.png) 
+
+​		<span style="color:red;background:white;font-size:20px;font-family:楷体;">**数据从底层的数据源开始，经过各种各样的格式进入大数据平台，在大数据平台中经过Kafka、Flume等数据组件进行收集，然后分成两条线进行计算。**</span>
+
+​		<span style="color:red;background:white;font-size:20px;font-family:楷体;">**一条线进入流式计算平台(例如 Storm、Flink或者Spark Streaming)，去计算实时的一些指标;**</span>
+
+​		<span style="color:red;background:white;font-size:20px;font-family:楷体;">**一条线进入批量数据处理离线计算平台(例如Mapreduce、Hive，Spark SQL)，去计算T+1的相关业务指标，这些指标需要隔日才能看见。**</span>
+
+​		Lambda架构经历多年的发展，其优点是稳定，对于实时计算部分的计算成本可控，批量处理可以用晚上的时间来整体批量计算，这样把实时计算和离线计算高峰分开，这种架构支撑了数据行业的早期发展，但是它也有一些致命缺点，并在大数据3.0时代越来越不适应数据分析业务的需求。缺点如下：
+
+● 实时与批量计算结果不一致引起的数据口径问题：因为批量和实时计算走的是两个计算框架和计算程序，算出的结果往往不同，经常看到一个数字当天看是一个数据，第二天看昨天的数据反而发生了变化。
+
+
+
+● 批量计算在计算窗口内无法完成：在IOT时代，数据量级越来越大，经常发现夜间只有4、5个小时的时间窗口，已经无法完成白天20多个小时累计的数据，保证早上上班前准时出数据已成为每个大数据团队头疼的问题。
+
+
+
+● 数据源变化都要重新开发，开发周期长：每次数据源的格式变化，业务的逻辑变化都需要针对ETL和Streaming做开发修改，整体开发周期很长，业务反应不够迅速。
+
+
+
+● 服务器存储大：数据仓库的典型设计，会产生大量的中间结果表，造成数据急速膨胀，加大服务器存储压力。
+
+
+
+
+
+### 5-1-2 Kappa架构
+
+​		针对Lambda架构的需要维护两套程序等以上缺点，LinkedIn的Jay Kreps结合实际经验和个人体会提出了Kappa架构。
+
+​		<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Kappa架构的核心思想是通过改进流计算系统来解决数据全量处理的问题，使得实时计算和批处理过程使用同一套代码**</span>。
+
+​		此外Kappa架构认为只有在有必要的时候才会对历史数据进行重复计算，而如果需要重复计算时，Kappa架构下可以启动很多个实例进行重复计算。
+
+一个典型的Kappa架构如下图所示：
+
+![img](images/wps4-1618759363528.jpg) 
+
+Kappa架构的核心思想，包括以下三点：
+
+1.用Kafka或者类似MQ队列系统收集各种各样的数据，你需要几天的数据量就保存几天。
+
+2.当需要全量重新计算时，重新起一个流计算实例，从头开始读取数据进行处理，并输出到一个新的结果存储中。
+
+3.当新的实例做完后，停止老的流计算实例，并把老的一些结果删除。
+
+Kappa架构的优点在于将实时和离线代码统一起来，方便维护而且统一了数据口径的问题。而Kappa的缺点也很明显：
+
+● 流式处理对于历史数据的高吞吐量力不从心：所有的数据都通过流式计算，即便通过加大并发实例数亦很难适应IOT时代对数据查询响应的即时性要求。
+
+● 开发周期长：此外Kappa架构下由于采集的数据格式的不统一，每次都需要开发不同的Streaming程序，导致开发周期长。
+
+● 服务器成本浪费：Kappa架构的核心原理依赖于外部高性能存储redis,hbase服务。但是这2种系统组件，又并非设计来满足全量数据存储设计，对服务器成本严重浪费。
+
+ 
+
+|                    | **lambda 架构**                        | **kappa 架构**                                               |
+| ------------------ | -------------------------------------- | ------------------------------------------------------------ |
+| 数据处理能力       | 可处理超大规模的历史数据               | 历史数据处理能力有限                                         |
+| 机器开销           | 批处理和实时计算需一直运行，机器开销大 | 必要时进行全量计算，机器开销相对较小                         |
+| 存储开销           | 只需要保存一份查询结果，存储开销较小   | 需要存储新老实例结果，存储开销相对较大。但如果是多 Job 共用的集群，则只需要预留出一小部分的存储即可 |
+| 开发、测试难易程度 | 实现两套代码，开发、测试难度较大       | 只需面对一个框架，开发、测试难度相对较小                     |
+| 运维成本           | 维护两套系统，运维成本大               | 只需维护一个框架，运维成本小                                 |
+
+ 
+
+### 5-1-3 IOTA架构
+
+​		而在IOT大潮下，智能手机、PC、智能硬件设备的计算能力越来越强，而业务需求要求数据实时响应需求能力也越来越强，过去传统的中心化、非实时化数据处理的思路已经不适应现在的大数据分析需求，提出新一代的大数据IOTA架构来解决上述问题
+
+​		<span style="color:red;background:white;font-size:20px;font-family:楷体;">**整体思路是设定标准数据模型，通过边缘计算技术把所有的计算过程分散在数据产生、计算和查询过程当中，以统一的数据模型贯穿始终，从而提高整体的预算效率，同时满足即时计算的需要，可以使用各种Ad-hoc Query(即席查询)来查询底层数据：**</span>
+
+![image-20210418232130593](images/image-20210418232130593.png)
+
+IOTA整体技术结构分为几部分：
+
+● Common Data Model：贯穿整体业务始终的数据模型，这个模型是整个业务的核心，要保持SDK、cache、历史数据、查询引擎保持一致。对于用户数据分析来讲可以定义为“主-谓-宾”或者“对象-事件”这样的抽象模型来满足各种各样的查询。以大家熟悉的APP用户模型为例，用“主-谓-宾”模型描述就是“X用户 – 事件1 – A页面(2018/4/11 20:00) ”。当然，根据业务需求的不同，也可以使用“产品-事件”、“地点-时间”模型等等。模型本身也可以根据协议(例如 protobuf)来实现SDK端定义，中央存储的方式。此处核心是，从SDK到存储到处理是统一的一个Common Data Model。
+
+● Edge SDKs & Edge Servers：这是数据的采集端，不仅仅是过去的简单的SDK，在复杂的计算情况下，会赋予SDK更复杂的计算，在设备端就转化为形成统一的数据模型来进行传送。例如对于智能Wi-Fi采集的数据，从AC端就变为“X用户的MAC 地址-出现- A楼层(2018/4/11 18:00)”这种主-谓-宾结构，对于摄像头会通过Edge AI Server，转化成为“X的Face特征- 进入- A火车站(2018/4/11 20:00)”。也可以是上面提到的简单的APP或者页面级别的“X用户 – 事件1 – A页面(2018/4/11 20:00) ”，对于APP和H5页面来讲，没有计算工作量，只要求埋点格式即可。
+
+● RealTime Data：实时数据缓存区，这部分是为了达到实时计算的目的，海量数据接收不可能海量实时入历史数据库，那样会出现建立索引延迟、历史数据碎片文件等问题。因此，有一个实时数据缓存区来存储最近几分钟或者几秒钟的数据。这块可以使用Kudu或者Hbase等组件来实现。这部分数据会通过Dumper来合并到历史数据当中。此处的数据模型和SDK端数据模型是保持一致的，都是Common Data Model，例如“主-谓-宾”模型。
+
+● Historical Data：历史数据沉浸区，这部分是保存了大量的历史数据，为了实现Ad-hoc查询，将自动建立相关索引提高整体历史数据查询效率，从而实现秒级复杂查询百亿条数据的反馈。例如可以使用HDFS存储历史数据，此处的数据模型依然SDK端数据模型是保持一致的Common Data Model。
+
+● Dumper：Dumper的主要工作就是把最近几秒或者几分钟的实时数据，根据汇聚规则、建立索引，存储到历史存储结构当中，可以使用map-reduce、C、Scala来撰写，把相关的数据从Realtime Data区写入Historical Data区。
+
+● Query Engine：查询引擎，提供统一的对外查询接口和协议(例如SQL JDBC)，把Realtime Data和Historical Data合并到一起查询，从而实现对于数据实时的Ad-hoc查询。例如常见的计算引擎可以使用presto、impala、clickhouse等。
+
+● Realtime model feedback：通过Edge computing技术，在边缘端有更多的交互可以做，可以通过在Realtime Data去设定规则来对Edge SDK端进行控制，例如，数据上传的频次降低、语音控制的迅速反馈，某些条件和规则的触发等等。简单的事件处理，将通过本地的IOT端完成，例如，嫌疑犯的识别现在已经有很多摄像头本身带有此功能。
+
+IOTA大数据架构，主要有如下几个特点：
+
+● 去ETL化：ETL和相关开发一直是大数据处理的痛点，IOTA架构通过Common Data Model的设计，专注在某一个具体领域的数据计算，从而可以从SDK端开始计算，中央端只做采集、建立索引和查询，提高整体数据分析的效率。
+
+● Ad-hoc即时查询：鉴于整体的计算流程机制，在手机端、智能IOT事件发生之时，就可以直接传送到云端进入realtime data区，可以被前端的Query Engine来查询。此时用户可以使用各种各样的查询，直接查到前几秒发生的事件，而不用在等待ETL或者Streaming的数据研发和处理。
+
+● 边缘计算(Edge-Computing)：将过去统一到中央进行整体计算，分散到数据产生、存储和查询端，数据产生既符合Common Data Model。同时，也给与Realtime model feedback，让客户端传送数据的同时马上进行反馈，而不需要所有事件都要到中央端处理之后再进行下发。
+
+![img](images/wps2-1618759315445.jpg)![img](images/wps3.png) 
+
+如上图，IOTA架构有各种各样的实现方法，为了验证IOTA架构，很多公司也自主设计并实现了“秒算”引擎
+
+
+
+​		在大数据3.0时代，Lambda大数据架构已经无法满足企业用户日常大数据分析和精益运营的需要，去ETL化的IOTA大数据架构也许才是未来。
+
+
+
+
+
+## 5-2 状态计算
 
 计算分为 **有状态**  和  **无状态**两种
 

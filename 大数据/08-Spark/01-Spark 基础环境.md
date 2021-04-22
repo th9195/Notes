@@ -1,8 +1,12 @@
+[TOC]
+
+
+
 # 1- Spark 框架概述
 
 ## 1-1 Spark 是什么
 
-- 定义：
+- 定义：分布式内存迭代计算框架
 
   ``` properties
   Apache Spark是用于大规模数据（large-scala data）处理的统一（unified）分析引擎。
@@ -72,7 +76,7 @@
 
 ![img](images/wps9-1617069592283.jpg)
 
-### 1-2-4 运行方式
+### 1-2-4 多种运行方式
 
 ​		Spark 支持多种运行方式，包括在 Hadoop 和 Mesos 上，也支持 Standalone的独立运行模式，同时也可以运行在云Kubernetes（Spark 2.3开始支持）上。
 
@@ -92,7 +96,7 @@
 
 
 
-## 1-3-1 Spark Core
+### 1-3-1 Spark Core
 
 实现了 Spark 的基本功能，包含RDD、任务调度、内存管理、错误恢复、与存储系统交互等模块。<span style="color:red;background:white;font-size:20px;font-family:楷体;">**数据结构：RDD**</span>
 
@@ -215,7 +219,7 @@ Spark中有2类角色，一个是Master类似Namenode做管理
 
  
 
-<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Local模式就是，以一个JVM进程，去模拟整个Spark的运行环境，就是讲Master和Worker角色以线程的形式运行在这个进程中。**</span>
+<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Local模式就是，以一个JVM进程，去模拟整个Spark的运行环境，就是将Master和Worker角色以线程的形式运行在这个进程中。**</span>
 
 ![img](images/wps21-1617070507823.jpg)
 
@@ -907,7 +911,7 @@ http://node1:4040/jobs/
 ## 5-2 注意事项
 
 - Spark On Yarn的本质?
-  - 将Spark任务的class字节码文件打成jar包,提交到Yarn的JVM中去运行
+  - **将Spark任务的class字节码文件打成jar包,提交到Yarn的JVM中去运行**
 
 - Spark On Yarn需要啥?
   - 1.需要Yarn集群:已经安装了
