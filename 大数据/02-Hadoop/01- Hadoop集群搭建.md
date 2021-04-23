@@ -273,13 +273,13 @@ vim  core-site.xml
 <!-- 设置历史任务的主机和端口 -->
 <property>
 	<name>mapreduce.jobhistory.address</name>
-	<value>node1:10020</value>
+	<value>node3:10020</value>
 </property>
 
 <!-- 设置网页访问历史任务的主机和端口 -->
 <property>
 	<name>mapreduce.jobhistory.webapp.address</name>
-	<value>node1:19888</value>
+	<value>node3:19888</value>
 </property>
 ```
 
@@ -633,7 +633,7 @@ http://192.168.88.161:8088/cluster
 - 查看MapReduce历史任务页面地址:
 
 ``` html
-http://192.168.88.161:19888/jobhistory
+http://192.168.88.163:19888/jobhistory
 ```
 
 
@@ -691,7 +691,7 @@ hadoop fs -put a.txt  /
 计算圆周率
 
 ``` shell
- hadoop jar hadoop-mapreduce-examples-2.7.5.jar pi 2 100000000
+ hadoop jar /export/server/hadoop-2.7.5/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.5.jar pi 2 100000000
 ```
 
 结果：
