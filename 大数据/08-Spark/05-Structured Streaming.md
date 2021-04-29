@@ -749,7 +749,7 @@ object Demo06_QueryName {
 
 ## 4-4 检查点位置（状态恢复）
 
-​		在Structured Streaming中使用<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Checkpoint 检查点进行故障恢复**</span>。如果实时应用发生故障或关机，可以恢复之前的查询的进度和状态，并从停止的地方继续执行，使用Checkpoint和预写日志WAL完成。使用检查点位置配置查询，那么查询将所有进度信息（即每个触发器中处理的偏移范围）和运行聚合（例如词频统计wordcount）保存到检查点位置。此检查点位置必须是HDFS兼容文件系统中的路径，
+​		在Structured Streaming中使用<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Checkpoint 检查点进行故障恢复**</span>。如果实时应用发生故障或关机，可以恢复之前的查询的进度和状态，并从停止的地方继续执行，**使用Checkpoint和预写日志WAL完成**。使用检查点位置配置查询，那么查询将所有进度信息（即每个触发器中处理的偏移范围）和运行聚合（例如词频统计wordcount）保存到检查点位置。此检查点位置必须是HDFS兼容文件系统中的路径，
 
 两种方式设置Checkpoint Location位置：
 

@@ -2,9 +2,9 @@
 
 
 
-# Flink概述
+# 1 Flink概述
 
-## Flink发展史
+## 1-1 Flink发展史
 
 2009年诞生
 
@@ -18,7 +18,7 @@
 
 
 
-## Flink官方介绍
+## 1-2 Flink官方介绍
 
 https://flink.apache.org/zh/
 
@@ -48,17 +48,17 @@ Hive
 
 
 
-## Flink组件
+## 1-3 Flink组件
 
 ![1614821714658](images/1614821714658.png)
 
-## Flink基石
+## 1-4 Flink基石
 
 ![1614821766935](images/1614821766935.png)
 
 
 
-## Flink的应用场景
+## 1-5 Flink的应用场景
 
 所有的流式应用都可以使用Flink
 
@@ -66,11 +66,11 @@ Hive
 
 
 
-## 为什么选择Flink?
+## 1-6 为什么选择Flink?
 
 ![image-20210421151637002](images/image-20210421151637002.png)
 
-### 主要原因
+### 1-6-1 主要原因
 
 - 1.<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Flink 具备统一的框架处理有界和无界两种数据流的能力**</span>
 
@@ -82,7 +82,7 @@ Hive
 
  
 
-### 其他更多的原因:
+### 1-6-2 其他更多的原因:
 
 - 1- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**同时支持高吞吐、低延迟、高性能**</span>
   - <span style="color:blue;background:white;font-size:20px;font-family:楷体;">**Flink 是目前开源社区中唯一一套集高吞吐、低延迟、高性能三者于一身的分布式流式数据处理框架。**</span>
@@ -183,7 +183,7 @@ Hive
 - 10- 丰富的库
   - Flink 拥有丰富的库来进行机器学习，图形处理，关系数据处理等。
 
-## 流处理 VS 批处理
+## 1-7 流处理 VS 批处理
 
 - 它们的主要区别是：
   - 与批量计算那样慢慢积累数据不同，流式计算立刻计算，数据持续流动，计算完之后就丢弃。
@@ -192,7 +192,7 @@ Hive
 
 
 
-## 流批统一
+## 1-8 流批统一
 
 在大数据处理领域，**批处理任务 与 流处理任务**一般被认为是两种不同的任务，一个大数据框架一般会被设计为只能处理其中一种任务：
 
@@ -253,7 +253,7 @@ Hive
 
 
 
-# Flink安装部署
+# 2 Flink安装部署
 
 - 前置说明
 
@@ -265,7 +265,7 @@ Hive
 
 
 
-## Local本地模式-了解
+## 2-1 Local本地模式-了解
 
 ### 原理
 
@@ -340,7 +340,7 @@ http://node1:8081/#/overview
 
 
 
-## Standalone独立集群模式-了解
+## 2-2 Standalone独立集群模式
 
 ### 原理
 
@@ -486,7 +486,7 @@ http://node1:8082/#/overview   ---Flink历史服务器管理界面
 
 
 
-## Standalone-HA高可用集群模式-了解
+## 2-3 Standalone-HA高可用集群模式
 
 ### 原理
 
@@ -629,7 +629,7 @@ scp -r flink-shaded-hadoop-2-uber-2.7.5-10.0.jar node3:$PWD
 
 
 
-## FlinkOnYarn模式-掌握
+## 2-4 FlinkOnYarn模式-掌握
 
 ### 注意
 
@@ -739,7 +739,7 @@ scp -r flink-shaded-hadoop-2-uber-2.7.5-10.0.jar node3:$PWD
 
 
 
-### 两种模式
+### 2-4-1 两种模式
 
 #### Session会话模式
 
@@ -755,7 +755,7 @@ scp -r flink-shaded-hadoop-2-uber-2.7.5-10.0.jar node3:$PWD
 
 ![1614829917461](images/1614829917461.png)
 
-### 操作和测试
+### 2-4-2 操作和测试
 
 注意: 关闭yarn的内存检查
 
@@ -1346,17 +1346,17 @@ Action "savepoint" triggers savepoints for a running job or disposes existing on
 
 
 
-# Flink任务开发
+# 3- Flink任务开发
 
-## 需求
+## 3-1 需求
 
 将我们自己写的/开发的Flink任务打包并提交到Yarn上
 
 
 
-## 准备工作
+## 3-2 准备工作
 
-### API
+### 3-2-1 API
 
 注意:
 
@@ -1370,7 +1370,7 @@ Action "savepoint" triggers savepoints for a running job or disposes existing on
 
 
 
-### 编码步骤/模型
+### 3-2-2 编码步骤/模型
 
 Spark:
 
@@ -1402,7 +1402,7 @@ Flink:
 
 ![1614842027260](images/1614842027260.png)
 
-### 准备项目模块
+### 3-2-3 准备项目模块
 
 ![1614842097372](images/1614842097372.png)
 
@@ -1428,7 +1428,7 @@ Flink:
 
 
 
-## 代码实现-1-DataSet
+## 3-3 代码实现-1-DataSet
 
 https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/batch/
 
@@ -1505,7 +1505,11 @@ public class WordCount01 {
 }
 ```
 
-## 代码实现-2-DataStream-掌握
+
+
+
+
+## 3-4 代码实现-2-DataStream-掌握
 
 https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/datastream_api.html
 
@@ -1598,7 +1602,7 @@ public class WordCount02 {
 
 
 
-## 代码实现-3-DataStream-Lambda-扩展
+## 3-5 代码实现-3-DataStream-Lambda-扩展
 
 就是使用Java的函数式编程
 
@@ -1706,9 +1710,9 @@ public class WordCount03 {
 
 
 
-## 代码实现-4-DataStream-Yarn-掌握
+## 3-6 代码实现-4-DataStream-Yarn-掌握
 
-1.修改代码
+### 3-6-1 修改代码
 
 ```java
 package cn.itcast.hello;
@@ -1792,29 +1796,31 @@ public class WordCount04 {
 
 
 
-2.打包
+### 3-6-2 打包
 
 ![1614848743539](images/1614848743539.png)
 
-3.改名
+### 3-6-3 改名
 
 ![1614848861269](images/1614848861269.png)
 
 
 
-4.上传
+### 3-6-4 上传
 
 ![1614848945412](images/1614848945412.png)
 
 
 
-5.提交我们自己开发打包的任务
+### 3-6-5 提交我们自己开发打包的任务
 
 可以使用Session会话模式或任务分离模式
 
 ```
-/export/server/flink-1.12.0/bin/flink run -m yarn-cluster -yjm 1024 -ytm 1024 -c cn.itcast.hello.WordCount04 /root/wc.jar --output hdfs://node1:8020/wordcount/output48_3_
+/export/server/flink-1.12.0/bin/flink run -m yarn-cluster -yjm 1024 -ytm 1024 -c com.fiberhome.flink.yarn.WordCount /export/data/flinkData/wc.jar --output hdfs://node1:8020/wordcount/output424_
 ```
+
+![image-20210424110926505](images/image-20210424110926505.png)
 
 
 

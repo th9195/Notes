@@ -2552,7 +2552,7 @@ Spark会尽量安排DAG中的数据流转在内存中流转。尽量避免网络
  
 
 - 2.Driver：
-  - 驱动,就是用来执行main方法的JVM进程,里面会执行一些Drive端的代码,如创建SparkContext,设置应用名,设置日志级别...
+  - 驱动,就是用来执行main方法的JVM进程,里面会执行一些Driver端的代码,如创建SparkContext,设置应用名,设置日志级别...
 
  
 
@@ -2562,7 +2562,7 @@ Spark会尽量安排DAG中的数据流转在内存中流转。尽量避免网络
  
 
 - 4.ClusterManager：
-  - 集群管理器,对于Standalone模式,就是Master,对于Yarn模式就是ResourceManager/ApplicationMaster,在集群上做统一的资源管理的进程
+  - 集群管理器,对于Standalone模式,就是AppMaster,对于Yarn模式就是ResourceManager/ApplicationMaster,在集群上做统一的资源管理的进程
 
  
 

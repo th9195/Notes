@@ -1032,9 +1032,12 @@ scp -r spark-env.sh root@node3:$PWD
 
 ``` xml
 <property>
-<name>yarn.web-proxy.address</name>
-<value>node1:8089</value>
+    <name>yarn.web-proxy.address</name>
+    <value>node1:8088</value>
 </property>
+
+注意： 以前我们配置的是8089，但是配置了yarn.web-proxy.address  yarn启动方式为: /export/server/hadoop-2.7.5/sbin/yarn-daemon.sh start proxyserver 
+所以我们把端口改为8088 使用hadoop的一键启动也可以使用。
 ```
 
 - 同步
@@ -1258,7 +1261,7 @@ mr-jobhistory-daemon.sh start historyserver
 
   ``` properties
   SPARK_HOME=/export/server/spark
-  ${SPARK_HOME}/bin/spark-submit \
+  /export/server/spark-2.4.5/bin/spark-submit \
   --master yarn  \
   --deploy-mode client \
   --driver-memory 512m \
@@ -1266,7 +1269,7 @@ mr-jobhistory-daemon.sh start historyserver
   --num-executors 1 \
   --total-executor-cores 2 \
   --class org.apache.spark.examples.SparkPi \
-  ${SPARK_HOME}/examples/jars/spark-examples_2.11-2.4.5.jar \
+  /export/server/spark-2.4.5/examples/jars/spark-examples_2.11-2.4.5.jar \
   10
   ```
 
@@ -1294,7 +1297,7 @@ mr-jobhistory-daemon.sh start historyserver
 
   ``` properties
   SPARK_HOME=/export/server/spark
-  ${SPARK_HOME}/bin/spark-submit \
+  /export/server/spark-2.4.5//bin/spark-submit \
   --master yarn \
   --deploy-mode cluster \
   --driver-memory 512m \
@@ -1302,7 +1305,7 @@ mr-jobhistory-daemon.sh start historyserver
   --num-executors 1 \
   --total-executor-cores 2 \
   --class org.apache.spark.examples.SparkPi \
-  ${SPARK_HOME}/examples/jars/spark-examples_2.11-2.4.5.jar \
+  /export/server/spark-2.4.5/examples/jars/spark-examples_2.11-2.4.5.jar \
   10
   ```
 

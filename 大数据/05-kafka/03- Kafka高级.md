@@ -404,6 +404,25 @@ public class KafkaConsumerTest2 {
 
 请查看 .\kafka-eagle安装\kafka-eagle安装操作.docx
 
+### 8-3 启动/关闭kafka-eagle
+
+- 启动 kafka_eagle。
+  /export/server/kafka-eagle-web-1.4.6/bin/ke.sh start
+
+  
+
+- 停止
+  /export/server/kafka-eagle-web-1.4.6/bin/ke.sh stop
+
+
+
+- 注意： **需要启动zk 和 kfk 的集群**
+
+
+
+- 访问Kafka eagle，默认用户为**admin**，密码为：**123456**
+  http://node2:8048/ke
+
 
 
 ### 8-3 kafka-eagle 能做什么
