@@ -1,4 +1,8 @@
-# 复习回顾
+[TOC]
+
+
+
+# 1- 复习回顾
 
 - 1.异步IO
 
@@ -126,9 +130,9 @@
 
 
 
-# 综合练习1-双十一实时大屏统计-好好敲!慢慢敲!
+# 2- 综合练习1-双十一实时大屏统计-好好敲!慢慢敲!
 
-## 需求
+## 2-1 需求
 
 ![1615426314019](images/1615426314019.png)
 
@@ -148,7 +152,7 @@
 
 
 
-## 数据
+## 2-2 数据
 
 ```java
 package cn.itcast.exercise;
@@ -218,7 +222,7 @@ public class DoubleElevenBigScreem {
 
 
 
-## 代码实现
+## 2-3 代码实现
 
 ![1615427654191](images/1615427654191.png)
 
@@ -460,7 +464,9 @@ public class DoubleElevenBigScreem {
 
 ```
 
-## 最终效果
+
+
+## 2-4 最终效果
 
 ![1615433063352](images/1615433063352.png)
 
@@ -470,15 +476,19 @@ public class DoubleElevenBigScreem {
 
 
 
-# 综合练习2-订单自动好评-好好敲!慢慢敲!
+# 3- 综合练习2-订单自动好评-好好敲!慢慢敲!
 
-## 需求
+
+
+## 3-1 需求
 
 ![1615444567564](images/1615444567564.png)
 
 在电商领域会有这么一个场景，如果用户买了商品，在订单完成之后，一定时间之内没有做出评价，系统自动给与五星好评，我们今天主要使用Flink的定时器来简单实现这一功能。
 
-## 数据
+
+
+## 3-2 数据
 
 ```java
  /**
@@ -507,7 +517,7 @@ public class DoubleElevenBigScreem {
 
 
 
-## 代码实现
+## 3-3 代码实现
 
 ![1615445180187](images/1615445180187.png)
 
@@ -660,33 +670,85 @@ public class OrderAutomaticFavorableComments {
 
 
 
-## 最后效果
+## 3-4 最后效果
 
 ![1615447203987](images/1615447203987.png)
 
 
 
-# 综合练习3-BroadcastState-了解
+# 4- 综合练习3-BroadcastState-了解
 
-## 需求
+
+
+## 4-1 需求
 
 ![1615450018174](images/1615450018174.png)
 
-一个数据流(实时进来数据,且数据量大), 
+![1620544986166](images/1620544986166.png)
 
-一个用户信息流(配置流)(数据不经常发生变化,但会变化,且数据了不大)
+
+
+
+
+
+
+
+
+```properties
+实时过滤出配置中的用户，并在事件流中补全这批用户的基础信息。
+1.日志事件流：表示用户在某个时刻浏览或点击了某个商品，格式如下。
+{"userID": "user_3", "eventTime": "2019-08-17 12:19:47", "eventType": "browse", "productID": 1}
+{"userID": "user_2", "eventTime": "2019-08-17 12:19:48", "eventType": "click", "productID": 1}
+
+2.配置数据(数据流较小,偶尔会变化): 表示用户的详细信息，在Mysql中，如下。
+DROP TABLE IF EXISTS `user_info`;
+CREATE TABLE `user_info`  (
+  `userID` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `userName` varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
+  `userAge` int(11) NULL DEFAULT NULL,
+  PRIMARY KEY (`userID`) USING BTREE
+) ENGINE = MyISAM CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+-- ----------------------------
+-- Records of user_info
+-- ----------------------------
+INSERT INTO `user_info` VALUES ('user_1', '张三', 10);
+INSERT INTO `user_info` VALUES ('user_2', '李四', 20);
+INSERT INTO `user_info` VALUES ('user_3', '王五', 30);
+INSERT INTO `user_info` VALUES ('user_4', '赵六', 40);
+SET FOREIGN_KEY_CHECKS = 1;
+
+3.输出结果:
+(user_3,2019-08-17 12:19:47,browse,1,王五,33)
+(user_2,2019-08-17 12:19:48,click,1,李四,20)
+```
+
+
+
+一个数据流A(实时进来数据,且**数据量大**), 
+
+一个用户信息流B(**配置流**)(**数据不经常发生变化,但会变化,且数据量不大**)
 
 现在数据流要根据用户信息流补充数据流中的用户信息,可以:
 
 1.数据流.map(查询)--要查很多次,不合适
 
-2.把用户信息流广播到内存中,并定期更新,然后和数据流进行conncet,然后处理进行信息补全
+2.把用户信息流广播到内存中,并定期更新,然后和数据流进行**conncet**,然后处理进行信息补全
 
 针对这种情况,Flink提供了广播状态! 
 
 
 
-## 数据
+<span style="color:red;background:white;font-size:20px;font-family:楷体;">**下游的操作接收这些配置、规则并保存为 BroadcastState, 将这些配置应用到另一个数据流的计算中 。**</span>
+
+
+
+- 场景举例
+  - 1) **动态更新计算规则**: 如事件流需要根据最新的规则进行计算，则可将规则作为广播状态广播到下游Task中。
+  - 2) **实时增加额外字段**: 如事件流需要实时增加用户的基础信息，则可将用户的基础信息作为广播状态广播到下游Task中。
+
+
+
+## 4-2 数据
 
 日志数据
 
@@ -753,11 +815,58 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 
 
-## 代码实现
+
+
+## 4-3 重要技术点
+
+- 定义**状态描述器**记录广播信息
+
+``` java
+//-1.定义状态描述器(了解复杂嵌套格式的定义)
+MapStateDescriptor<Void,Map<String,Tuple2<String,Integer>>> stateDescriptor = new 			MapStateDescriptor<>(
+                "user",
+                Types.VOID,
+                Types.MAP(Types.STRING,Types.TUPLE(Types.STRING,Types.INT)));
+```
+
+- 将用户信息通过状态描述器广播出去
+
+``` java
+//-2.广播用户信息流/配置流
+BroadcastStream<Map<String, Tuple2<String, Integer>>> broadcastDS
+    = userDS.broadcast(stateDescriptor);
+```
+
+- 两个流连接起来
+
+``` java
+//-3.将用户点击日志数据流和广播用户信息流/配置流进行连接
+BroadcastConnectedStream<Tuple4<String, String, String, Integer>, Map<String, Tuple2<String, Integer>>> connectDS = logDS.connect(broadcastDS);
+
+```
+
+- 处理连接后的流 BroadcastProcessFunction
 
 ```java
-package cn.itcast.exercise;
+//-4.处理连接后的流-根据配置流补全事件流中的用户的信息
+connectDS.process(new BroadcastProcessFunction<
+                Tuple4<String, String, String, Integer>,    // log流
+                Map<String, Tuple2<String, Integer>>,       // user流
+                Tuple6<String, String, String, String, String, String>>() {
+                    ......
+                }
+```
 
+
+
+
+
+## 4-4 代码实现
+
+```java
+package com.fiberhome.flink.action;
+
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.state.BroadcastState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -769,7 +878,7 @@ import org.apache.flink.api.java.tuple.Tuple6;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.BroadcastConnectedStream;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
-import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
@@ -781,85 +890,91 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-/**
- * Author itcast
- * Desc
- * 一个数据流(实时进来数据,且数据量大),
- * 一个用户信息流(配置流)(数据不经常发生变化,但会变化,且数据了不大)
- * 现在数据流要根据用户信息流补充数据流中的用户信息,可以:
- * 把用户信息流广播到内存中,并定期更新,然后和数据流进行conncet,然后处理进行信息补全
- * 针对这种情况,Flink提供了广播状态!
- */
-public class BroadcastStateDemo {
+public class Demo03_BroadCastState {
     public static void main(String[] args) throws Exception {
-        //TODO 1.env-准备环境
+
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);
-        //TODO 2.source-加载数据
-        //用户点击日志数据流
-        DataStream<Tuple4<String, String, String, Integer>> logDS = env.addSource(new MySource());
-        //用户信息流
-        DataStream<Map<String, Tuple2<String, Integer>>> userInfoDS = env.addSource(new MySQLSource());
+
+
+        DataStreamSource<Map<String, Tuple2<String, Integer>>> userDS = env.addSource(new MySqlSource());
+//        userDS.print();
+
+        DataStreamSource<Tuple4<String, String, String, Integer>> logDS = env.addSource(new MyLogSource());
+//        logDS.print();
 
         //TODO 3.transformation-数据转换处理
         //-1.定义状态描述器(了解复杂嵌套格式的定义)
-        MapStateDescriptor<Void, Map<String, Tuple2<String,Integer>>> stateDescriptor = new MapStateDescriptor<>("user", Types.VOID, Types.MAP(Types.STRING, Types.TUPLE(Types.STRING, Types.INT)));
+        MapStateDescriptor<Void,Map<String,Tuple2<String,Integer>>> stateDescriptor = new MapStateDescriptor<>(
+                "user",
+                Types.VOID,
+                Types.MAP(Types.STRING,Types.TUPLE(Types.STRING,Types.INT)));
 
         //-2.广播用户信息流/配置流
-        BroadcastStream<Map<String, Tuple2<String, Integer>>> broadcastDS = userInfoDS.broadcast(stateDescriptor);
+        BroadcastStream<Map<String, Tuple2<String, Integer>>> broadcastDS
+                = userDS.broadcast(stateDescriptor);
+
 
         //-3.将用户点击日志数据流和广播用户信息流/配置流进行连接
         BroadcastConnectedStream<Tuple4<String, String, String, Integer>, Map<String, Tuple2<String, Integer>>> connectDS = logDS.connect(broadcastDS);
 
+
         //-4.处理连接后的流-根据配置流补全事件流中的用户的信息
-        //BroadcastProcessFunction<Tuple4<String, String, String, Integer>, Map<String, Tuple2<String, Integer>>, Tuple6<String, String, String, Integer,String, Integer>>
-        //BroadcastProcessFunction<IN1, IN2, OUT>
-        //public abstract class BroadcastProcessFunction<IN1, IN2, OUT> extends BaseBroadcastProcessFunction {
-        SingleOutputStreamOperator<Tuple6<String, String, String, Integer, String, Integer>> resultDS = connectDS.process(new BroadcastProcessFunction<Tuple4<String, String, String, Integer>, Map<String, Tuple2<String, Integer>>, Tuple6<String, String, String, Integer, String, Integer>>() {
-            //处理元素/处理用户点击日志数据流
-            //public abstract void processElement(final IN1 value, final ReadOnlyContext ctx, final Collector<OUT> out) throws Exception;
+        SingleOutputStreamOperator<Tuple6<String, String, String, String, String, String>> result = connectDS.process(new BroadcastProcessFunction<
+                Tuple4<String, String, String, Integer>,    // log流
+                Map<String, Tuple2<String, Integer>>,       // user流
+                Tuple6<String, String, String, String, String, String>>() {
             @Override
-            public void processElement(Tuple4<String, String, String, Integer> value, ReadOnlyContext ctx, Collector<Tuple6<String, String, String, Integer, String, Integer>> out) throws Exception {
-                String userId = value.f0;
-                ReadOnlyBroadcastState<Void, Map<String, Tuple2<String, Integer>>> broadcastState = ctx.getBroadcastState(stateDescriptor);
+            public void processElement(Tuple4<String, String, String, Integer> log, ReadOnlyContext context, Collector<Tuple6<String, String, String, String, String, String>> collector) throws Exception {
+                ReadOnlyBroadcastState<Void, Map<String, Tuple2<String, Integer>>> broadcastState = context.getBroadcastState(stateDescriptor);
+                String userId = log.f0;
+
+//                System.out.println("userId == "+ userId);
+
                 if (broadcastState != null) {
-                    Map<String, Tuple2<String, Integer>> map = broadcastState.get(null);//根据key取状态中的map
-                    if (map != null && map.size() > 0) {
-                        Tuple2<String, Integer> t = map.get(userId);
-                        String name = t.f0.toString();
-                        Integer age = Integer.valueOf(t.f1.toString());
-                        out.collect(Tuple6.of(value.f0, value.f1, value.f2, value.f3, name, age));
-                    }/*else {
+                    Map<String, Tuple2<String, Integer>> map = broadcastState.get(null);// 根据key 获取状态中的map
 
-                    }*/
-                }/*else{
+                    // 判断是否有状态
+                    if(map != null && map.size() > 0){
+                        Tuple2<String, Integer> user = map.get(userId);
+                        String name = user.f0;
+                        Integer age = user.f1;
+                        Tuple6<String, String, String, String, String, String> result = Tuple6.of(log.f0, user.f0, age + "", log.f1, log.f2, log.f3 + "");
+                        collector.collect(result);
+                    }
 
-                }*/
+                }
+
             }
 
-            //处理广播流中的数据/用户信息流/配置流
-            //public abstract void processBroadcastElement(final IN2 value, final Context ctx, final Collector<OUT> out) throws Exception;
+            /**
+             * 更新广播状态数据， 每5s查询一次用户信息， 所以5s更新一次广播状态数据
+             * @param userInfo
+             * @param context
+             * @param collector
+             * @throws Exception
+             */
             @Override
-            public void processBroadcastElement(Map<String, Tuple2<String, Integer>> value, Context ctx, Collector<Tuple6<String, String, String, Integer, String, Integer>> out) throws Exception {
-                BroadcastState<Void, Map<String, Tuple2<String, Integer>>> broadcastState = ctx.getBroadcastState(stateDescriptor);
+            public void processBroadcastElement(Map<String, Tuple2<String, Integer>> userInfo, Context context, Collector<Tuple6<String, String, String, String, String, String>> collector) throws Exception {
+
+                System.out.println("========================更新广播信息===========================");
+                BroadcastState<Void, Map<String, Tuple2<String, Integer>>> broadcastState = context.getBroadcastState(stateDescriptor);
                 broadcastState.clear();//清空旧的状态
-                broadcastState.put(null, value);
+                broadcastState.put(null, userInfo); //更新用户信息
             }
         });
 
+        result.print();
 
-        //TODO 4.sink-数据输出
-        resultDS.print();
-
-        //TODO 5.execute-执行
         env.execute();
     }
+
+
 
     /**
      * 实时用户点击日志数据流
@@ -867,58 +982,26 @@ public class BroadcastStateDemo {
      * Tuple4<"userID": "user_3", "eventTime": "2019-08-17 12:19:47", "eventType": "browse", "productID": 1>
      * Tuple4<"userID": "user_2", "eventTime": "2019-08-17 12:19:48", "eventType": "click", "productID": 1>
      */
-    public static class MySource implements SourceFunction<Tuple4<String, String, String, Integer>> {
-        private boolean isRunning = true;
+    public static class MyLogSource implements SourceFunction<Tuple4<String,String,String,Integer>>{
+
+        Boolean flag = true;
+
+
         @Override
-        public void run(SourceContext<Tuple4<String, String, String, Integer>> ctx) throws Exception {
+        public void run(SourceContext<Tuple4<String, String, String, Integer>> sourceContext) throws Exception {
+
             Random random = new Random();
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            while (isRunning){
+            FastDateFormat df = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+
+            while (flag){
                 int id = random.nextInt(4) + 1;
                 String user_id = "user_" + id;
                 String eventTime = df.format(new Date());
                 String eventType = "type_" + random.nextInt(3);
                 int productId = random.nextInt(4);
-                ctx.collect(Tuple4.of(user_id,eventTime,eventType,productId));
-                Thread.sleep(500);
-            }
-        }
+                sourceContext.collect(Tuple4.of(user_id,eventTime,eventType,productId));
 
-        @Override
-        public void cancel() {
-            isRunning = false;
-        }
-    }
-    //自定义source完成每隔2s查询MySQL
-    //Map<String, Tuple2<String, Integer>
-    //Map<用户id, Tuple2<姓名, 年龄>
-    public static class MySQLSource  extends RichSourceFunction<Map<String, Tuple2<String, Integer>>> {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        //连接JDBC一次
-        @Override
-        public void open(Configuration parameters) throws Exception {
-            //加载驱动在DriverManager源码已经有了不用写了
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bigdata", "root", "root");
-            ps = conn.prepareStatement("select `userID`, `userName`, `userAge` from user_info");
-        }
-
-        private Boolean flag = true;
-        @Override
-        public void run(SourceContext<Map<String, Tuple2<String, Integer>>> ctx) throws Exception {
-            while (flag){
-                Map<String, Tuple2<String, Integer>> map = new HashMap<>();
-                //每隔2s查询一次MySQL表
-                ResultSet rs = ps.executeQuery();
-                //处理结果集
-                while (rs.next()){
-                    String userID = rs.getString("userID");
-                    String userName = rs.getString("userName");
-                    int userAge = rs.getInt("userAge");
-                    map.put(userID,Tuple2.of(userName,userAge));
-                    ctx.collect(map);
-                }
-                Thread.sleep(5000);
+                Thread.sleep(500L);
             }
         }
 
@@ -926,19 +1009,67 @@ public class BroadcastStateDemo {
         public void cancel() {
             flag = false;
         }
-        //关闭JDBC一次
+    }
+
+    //自定义source完成每隔2s查询MySQL
+    //Map<String, Tuple2<String, Integer>
+    //Map<用户id, Tuple2<姓名, 年龄>
+    public static class MySqlSource extends RichSourceFunction<Map<String, Tuple2<String, Integer>>> {
+
+        private Boolean flag = true;
+        private String url = "jdbc:mysql://localhost:3306/bigdata";
+        private String username = "root";
+        private String password = "123456";
+        private Connection connection;
+        private PreparedStatement ps;
+        private String sql = "select `userID`, `userName`, `userAge` from user_info";
+
         @Override
-        public void close() throws Exception {
-            if (conn != null) conn.close();
-            if (ps != null) ps.close();
+        public void open(Configuration parameters) throws Exception {
+            connection = DriverManager.getConnection(url, username, password);
+            ps = connection.prepareStatement(sql);
         }
 
+        @Override
+        public void close() throws Exception {
+            if (ps != null)
+                ps.close();
+            if (connection != null)
+                connection.close();
+        }
+
+        @Override
+        public void run(SourceContext<Map<String, Tuple2<String,Integer>>> sourceContext) throws Exception {
+
+            while (flag){
+                HashMap<String, Tuple2<String, Integer>> map = new HashMap<>();
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()){
+                    String userID = rs.getString("userID");
+                    String userName = rs.getString("userName");
+                    int userAge = rs.getInt("userAge");
+                    map.put(userID,Tuple2.of(userName,userAge));
+                }
+                sourceContext.collect(map);
+                Thread.sleep(6000);
+            }
+        }
+
+        @Override
+        public void cancel() {
+            flag = false;
+        }
     }
+
 }
 
 ```
 
 
+
+## 4-5 最后效果
+
+![image-20210512091026793](images/image-20210512091026793.png)
 
 
 

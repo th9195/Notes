@@ -1319,7 +1319,7 @@ https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/datastream_api.
 
 ![1614933218768](images/1614933218768.png)
 
-- 
+
 
 
 
@@ -1336,30 +1336,57 @@ https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/datastream_api.
 ``` properties
 
   ● 查看当前服务器中的所有topic
-/export/server/kafka/bin/kafka-topics.sh --list --zookeeper  node1:2181
+/export/server/kafka_2.12-2.4.1/bin/kafka-topics.sh --list --zookeeper  node1:2181
 
   ● 创建topic
-/export/server/kafka/bin/kafka-topics.sh --create --zookeeper node1:2181 --replication-factor 2 --partitions 3 --topic flink_kafka
+/export/server/kafka_2.12-2.4.1/bin/kafka-topics.sh --create --zookeeper node1:2181 --replication-factor 2 --partitions 3 --topic flink_kafka
 
   ● 查看某个Topic的详情
-/export/server/kafka/bin/kafka-topics.sh --topic flink_kafka --describe --zookeeper node1:2181
+/export/server/kafka_2.12-2.4.1/bin/kafka-topics.sh --topic flink_kafka --describe --zookeeper node1:2181
 
   ● 删除topic
-/export/server/kafka/bin/kafka-topics.sh --delete --zookeeper node1:2181 --topic flink_kafka
+/export/server/kafka_2.12-2.4.1/bin/kafka-topics.sh --delete --zookeeper node1:2181 --topic flink_kafka
 
   ● 通过shell命令发送消息
-/export/server/kafka/bin/kafka-console-producer.sh --broker-list node1:9092 --topic flinkConsumer
+/export/server/kafka_2.12-2.4.1/bin/kafka-console-producer.sh --broker-list node1:9092 --topic flinkConsumer
 
   ● 通过shell消费消息
-/export/server/kafka/bin/kafka-console-consumer.sh --bootstrap-server node1:9092 --topic flinkProducer --from-beginning 
+/export/server/kafka_2.12-2.4.1/bin/kafka-console-consumer.sh --bootstrap-server node1:9092 --topic flinkProducer --from-beginning 
 
   ● 修改分区
- /export/server/kafka/bin/kafka-topics.sh --alter --partitions 4 --topic flink_kafka --zookeeper node1:2181
+ /export/server/kafka_2.12-2.4.1/bin/kafka-topics.sh --alter --partitions 4 --topic flink_kafka --zookeeper node1:2181
 ```
 
 log:2020-10-10 fail xxx
 
 log:2020-10-10 success xxx
+
+
+
+
+
+- kafka 配置
+
+``` java
+//TODO 2.source-加载数据-ok
+//从kafka的topic1消费数据
+Properties properties = new Properties();
+properties.setProperty("bootstrap.servers", "192.168.88.161:9092");
+properties.setProperty("transaction.timeout.ms", 1000 * 5 + "");
+properties.setProperty("group.id", "flink");
+
+properties.setProperty("auto.offset.reset","latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
+
+properties.setProperty("enable.auto.commit", "true");//自动提交(提交到默认主题,后续学习了Checkpoint后随着Checkpoint存储在Checkpoint和默认主题中)
+
+properties.setProperty("auto.commit.interval.ms", "2000");//自动提交的时间间隔
+
+properties.setProperty("flink.partition-discovery.interval-millis","5000");//会开启一个后台线程每隔5s检测一下Kafka的分区情况,实现动态分区检测
+```
+
+
+
+
 
 - 代码实现
 
@@ -1420,7 +1447,7 @@ public class KafkaDemo {
 //1.准备topic1和topic2
 //2.启动kafka
 //3.往topic1发送如下数据
-///export/server/kafka/bin/kafka-console-producer.sh --broker-list node1:9092 --topic topic1
+///export/server/kafka_2.12-2.4.1/bin/kafka-console-producer.sh --broker-list node1:9092 --topic topic1
 //log:2020-10-10 success xxx
 //log:2020-10-10 success xxx
 //log:2020-10-10 success xxx

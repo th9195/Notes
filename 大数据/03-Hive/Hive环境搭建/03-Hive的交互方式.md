@@ -103,13 +103,17 @@ insert into stu values(1,"Tom");
 
 - 将修改好的core-site.xml文件分发到node2和node3,然后重启Hadoop（stop-all.sh start-all.sh）
 
+  
+
 - 在hive运行的服务器上，首先启动metastore服务，然后启动hiveserver2服务。
 
-``` shell
+``` properties
 nohup /export/server/hive-2.1.0/bin/hive --service metastore &
 nohup /export/server/hive-2.1.0/bin/hive --service hiveserver2 &
 # nohup 和 & 表示后台启动
 ```
+
+
 
 - 查看两个服务是否启动
 
@@ -125,9 +129,11 @@ nohup /export/server/hive-2.1.0/bin/hive --service hiveserver2 &
 [root@node3 ~]# 
 ```
 
+
+
 - 在node3上使用beeline客户端进行连接访问
 
-``` shell
+``` properties
 beeline
 ```
 

@@ -1166,7 +1166,7 @@ http://spark.apache.org/docs/latest/streaming-kafka-0-10-integration.html#obtain
 
  
 
-####  4-3-2-3 代码实现-自动提交偏移量到默认主题
+####  4-3-2-3 代码实现-自动提交偏移量
 
 ``` scala
 package cn.itcast.streaming
@@ -1242,7 +1242,7 @@ object SparkStreaming_Kafka_01 {
 
 
 
-#### 4-3-2-4 代码实现-手动提交偏移量到默认主题
+#### 4-3-2-4 代码实现-手动提交偏移量
 
 ``` scala
 package cn.itcast.streaming

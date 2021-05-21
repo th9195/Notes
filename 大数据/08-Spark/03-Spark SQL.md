@@ -2409,7 +2409,10 @@ object Demo13_SparkThriftServerJDBC {
 
 ## 9-1 配置
 
-编写配置文件**hive-site.xml**，并放于node1的【**$SPARK_HOME/conf**】目录
+- 编写配置文件**hive-site.xml**，并放于node1的【**$SPARK_HOME/conf**】目录
+
+
+目的： 让Spark指定hive的元数据信息；
 
 cd /export/server/spark2.4.5/conf/
 

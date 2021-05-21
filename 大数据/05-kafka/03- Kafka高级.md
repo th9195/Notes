@@ -311,6 +311,12 @@ public class KafkaConsumerTest2 {
 
 
 
+- **isr同步副本机制**：
+
+  - 如果长时间处于等待状态的副本就是从isr中移除掉 
+
+    
+
 - 面试题
 
 ![image-20210413143526234](images/image-20210413143526234.png)
@@ -330,6 +336,8 @@ public class KafkaConsumerTest2 {
 
 
 ## 4. kafka的数据存储机制
+
+如何保证写数据的一致性： **幂等性**
 
 ![image-20210206193017455](images/image-20210206193017455.png)
 

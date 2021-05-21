@@ -1,5 +1,3 @@
-# scala面向对象
-
 ## MAVEN依赖 - 掌握
 
 ```xml
