@@ -32,7 +32,7 @@
 
 ​		A Resilient Distributed Dataset (RDD), the basic abstraction in Spark. Represents an immutable, partitioned collection of elements that can be operated on in parallel.
 
-​		RDD（Resilient Distributed Dataset）弹性分布式数据集，是Spark中最基本的数据抽象，代表一个不可变、可分区、里面的元素可并行计算的集合。
+​		RDD（Resilient Distributed Dataset）**弹性分布式数据集**，是Spark中最基本的数据抽象，**代表一个不可变、可分区、里面的元素可并行计算的集合**。
 
 所有的运算以及操作都建立在 RDD 数据结构的基础之上。
 
@@ -64,6 +64,8 @@ RDD分布式集合	|	HDFS分布式存储
 
 分布式的List
 
+![image-20210607102510783](images/image-20210607102510783.png)
+
 
 
 ## 1-3 RDD的5大特性
@@ -72,7 +74,7 @@ RDD分布式集合	|	HDFS分布式存储
 
 前三个特征每个RDD都具备的，后两个特征可选的。
 
-- 第一个：A list of partitions 
+- 第一个：A list of partitions （**每个RDD都是有分区的(分布式)**）
 
   - 一组分片(Partition)/一个分区(Partition)列表，即数据集的基本组成单位；
   - 对于RDD来说，每个分片都会被一个计算任务处理，分片数决定并行度；
@@ -80,16 +82,16 @@ RDD分布式集合	|	HDFS分布式存储
 
   
 
-- 第二个：A function for computing each split 
+- 第二个：A function for computing each split  （**每个算子作用于每个分区上**）
 
-  - 一个函数会被作用在每一个分区；
+  - **一个函数会被作用在每一个分区**；
   - Spark中RDD的计算是以分片为单位的，compute函数会被作用到每个分区上；
 
   ![image-20210406101805065](images/image-20210406101805065.png)
 
 
 
-- 第三个：A list of dependencies on other RDDs
+- 第三个：A list of dependencies on other RDDs （**RDD之间相互依赖**）
 
   - 一个RDD会依赖于其他多个RDD；
 
@@ -103,26 +105,29 @@ RDD分布式集合	|	HDFS分布式存储
 
 
 
-- 第四个：Optionally, a Partitioner for key-value RDDs (e.g. to say that the RDD is hash-partitioned)
+- 第四个：（**key-value 数据可自定义分区器**）Optionally, a Partitioner for key-value RDDs (e.g. to say that the RDD is hash-partitioned)
   - 可选项,对于KeyValue类型的RDD会有一个Partitioner，即RDD的分区函数；
   - 当前Spark中实现了两种类型的分区函数，一个是基于哈希的HashPartitioner，另外一个是基于范围的RangePartitioner。
-  - 只有对于于key-value的RDD，才会有Partitioner，非key-value的RDD的Parititioner的值是None。
+  - **只有对于于key-value的RDD，才会有Partitioner**，非key-value的RDD的Parititioner的值是None。
   - Partitioner函数不但决定了RDD本身的分片数量，也决定了parent RDD Shuffle输出时的分片数量。
+  
+  ![image-20210607103838125](images/image-20210607103838125.png)
+  
+  
+  
+- 第五个：（**移动数据不如移动算法**）Optionally, a list of preferred locations to compute each split on (e.g. block locations for an HDFS file)
 
-
-
-- 第五个：Optionally, a list of preferred locations to compute each split on (e.g. block locations for an HDFS file)
   - 可选项，一个列表，存储存取每个Partition的优先位置(preferred location)；
   - 对于一个HDFS文件来说，这个列表保存的就是每个Partition所在的块的位置。
-  - 按照"移动数据不如移动计算"的理念，Spark在进行任务调度的时候，会尽可能选择那些存有数据的worker节点来进行任务计算。（数据本地性）
+  - 按照"**移动数据不如移动计算**"的理念，Spark在进行任务调度的时候，会尽可能选择那些存有数据的worker节点来进行任务计算。（数据本地性）
 
 
 
-​		RDD 是一个数据集的表示，不仅表示了数据集，还表示了这个数据集从哪来、如何计算，主要属性包括五个方面（必须牢记，通过编码加深理解，面试常问）：
+​		RDD 是一个**分布式弹性数据集**的表示，不仅表示了数据集，还表示了这个数据集从哪来、如何计算，主要属性包括五个方面（必须牢记，通过编码加深理解，面试常问）：
 
 ![image-20210406101930662](images/image-20210406101930662.png)
 
-​		RDD将Spark的底层的细节都隐藏起来（自动容错、位置感知、任务调度执行，失败重试等），让开发者可以像操作本地集合一样以函数式编程的方式操作RDD这个分布式数据集，进行各种并行计算，RDD中很多处理数据函数与列表List中相同与类似。
+​		RDD将Spark的底层的细节都隐藏起来（**自动容错（弹性）、位置感知、任务调度执行，失败重试**等），让开发者可以像操作本地集合一样以函数式编程的方式操作RDD这个分布式数据集，进行各种**并行计算**，RDD中很多处理数据函数与列表List中相同与类似。
 
 
 
@@ -264,6 +269,9 @@ object SparkParallelizeTest {
 
 ### 2-2-1 textFile
 
+- **可指定一个文件；**
+- **可指定一个文件夹；**
+
 ​		由外部存储系统的数据集创建，包括本地的文件系统，还有所有 Hadoop支持的数据集，比如 HDFS、Cassandra、HBase 等。实际使用最多的方法：textFile，读取HDFS或LocalFS上文本文件，指定文件路径和RDD分区数目。
 
 ​	![image-20210406102820720](images/image-20210406102820720.png)
@@ -321,10 +329,6 @@ object SparkFileSystemTest {
 
 
 
-
-
-
-
 ## 2-3 小文件读取
 
 ### 2-3-1 wholeTextFiles
@@ -372,28 +376,33 @@ object SparkWholeTextFileTest {
 
 
 
-## 2-4 RDD分区数
+## 2-4 获取RDD分区数
+
+
 
 - 在讲解 RDD 属性时，多次提到了分区（partition）的概念。分区是一个偏物理层的概念，也是 RDD 并行计算的单位。
-- 数据在 RDD 内部被切分为多个子集合，每个子集合可以被认为是一个分区，运算逻辑最小会被应用在每一个分区上，每个分区是由一个单独的任务（task）来运行的，所以分区数越多，整个应用的并行度也会越高。
+- 数据在 RDD 内部被切分为多个子集合，每个子集合可以被认为是一个分区，运算逻辑最小会被应用在每一个分区上，**每个分区是由一个单独的任务（task）来运行的**，所以**分区数越多，整个应用的并行度也会越高**。
 
 
 
 - 获取RDD分区数目两种方式：
 
+  - **rdd.getNumPartitions();**
+  - **rdd.partitions.length;**
+
   ![image-20210406103209683](images/image-20210406103209683.png)
 
 - RDD分区的数据取决于哪些因素？
-  - 第一点：RDD分区的原则是使得分区的个数尽量等于集群中的CPU核心(core)数目，这样可以充分利用CPU的计算资源；
-  -  第二点：在实际中为了更加充分的压榨CPU的计算资源，会把并行度设置为cpu核数的2~3倍；
-  -  第三点：RDD分区数和启动时指定的核数、调用方法时指定的分区数、如文件本身分区数有关系，具体如下说明：
+  - 第一点：RDD分区的原则是使得分区的个数尽量等于集群中的**CPU核心(core)数目**，这样可以充分利用CPU的计算资源；
+  -  第二点：在实际中为了更加充分的压榨CPU的计算资源，**会把并行度设置为cpu核数的2~3倍**；
+  -  第三点：RDD分区数和**启动时指定的核数**、**调用方法时指定的分区数**、**如文件本身分区数**有关系，具体如下说明：
     - 1）、启动的时候指定的CPU核数确定了一个参数值:
-      - spark.default.parallelism=指定的CPU核数(集群模式最小2)
-    - 2）、对于Scala集合调用parallelize(集合,分区数)方法
+      - **spark.default.parallelism=指定的CPU核数(集群模式最小2)**
+    - 2）、对于Scala集合调用**parallelize(集合,分区数)**方法
       - 如果没有指定分区数，就使用spark.default.parallelism
       - 如果指定了就使用指定的分区数(不要指定大于spark.default.parallelism)
     - 3）、对于textFile(文件, 分区数)
-      - defaultMinPartitions
+      - defaultMinPartitions （**默认是2个分区**）
         - 如果没有指定分区数sc.defaultMinPartitions=min(defaultParallelism,2) 
         - 如果指定了就使用指定的分区数sc.defaultMinPartitions=指定的分区数rdd的分区数
       - rdd的分区数
@@ -402,10 +411,6 @@ object SparkWholeTextFileTest {
         - 对于HDFS文件
           - rdd的分区数 = max(hdfs文件的block数目， sc.defaultMinPartitions)
         - 所以如果分配的核数为多个，且从文件中读取数据创建RDD，即使hdfs文件只有1个切片，最后的Spark的RDD的partition数也有可能是2
-
-
-
-
 
 # 3- RDD的操作
 
@@ -439,7 +444,7 @@ RDD中操作（函数、算子）分为两类：
   - 可以理解为在写 计划书
 -  2）、Action动作操作：<span style="color:red;background:white;font-size:20px;font-family:楷体;">**返回值不是RDD(无返回值或返回其他的)**</span>
   - which return a value to the driver program after running a computation on the datase
-  - 所有Action函数立即执行（Eager），比如count、first、collect、take等
+  - **所有Action函数立即执行（Eager）**，比如count、first、collect、take等
   - 可以理解为拿着计划书干活了
 
 ![image-20210406104300801](images/image-20210406104300801.png)
@@ -448,7 +453,7 @@ RDD中操作（函数、算子）分为两类：
 
 - 此外注意RDD中函数细节：
   - 第一点：RDD不实际存储真正要计算的数据，而是记录了数据的位置在哪里，数据的转换关系(调用了什么方法，传入什么函数)；
-  -  第二点：RDD中的所有转换都是惰性求值/延迟执行的，也就是说并不会直接计算。只有当发生一个要求返回结果给Driver的Action动作时，这些转换才会真正运行。之所以使用惰性求值/延迟执行，是因为这样<span style="color:red;background:white;font-size:20px;font-family:楷体;">**可以在Action时对RDD操作形成DAG有向无环图进行Stage的划分和并行优化，这种设计让Spark更加有效率地运行。**</span>
+  -  第二点：RDD中的所有转换都是**惰性求值/延迟执行**的，也就是说并不会直接计算。只有当发生一个要求返回结果给Driver的**Action动作**时，这些转换才会真正运行。之所以使用惰性求值/延迟执行，是因为这样<span style="color:red;background:white;font-size:20px;font-family:楷体;">**可以在Action时对RDD操作形成DAG有向无环图进行Stage的划分和并行优化，这种设计让Spark更加有效率地运行。**</span>
   - 也就是在运行action之前，前面的计划都列出来了，就可以根据集群的具体情况，优化分区的分布，和网络的传输关系。让性能最优。
     如果没有懒操作，那么一步步的执行，就没办法从整体做规划，做优化了。
 
@@ -456,7 +461,7 @@ RDD中操作（函数、算子）分为两类：
 
 ## 3-2 Transformation函数
 
-​		在Spark中Transformation操作表示将一个RDD通过一系列操作变为另一个RDD的过程，这个操作可能是简单的加减操作，也可能是某个函数或某一系列函数。值得注意的是Transformation操作并不会触发真正的计算，只会建立RDD间的关系图。
+​		在Spark中Transformation操作表示将一个RDD通过一系列操作变为另一个RDD的过程，这个操作可能是简单的加减操作，也可能是某个函数或某一系列函数。值得注意的是**Transformation操作并不会触发真正的计算，只会建立RDD间的关系图**。
 
 
 
@@ -619,25 +624,28 @@ object SparkIterTest {
 
 如何对RDD中分区数目进行调整（增加分区或减少分区），在RDD函数中主要有如下三个函数。
 
-- 1）、增加分区函数
+- 1）、**增加/减少分区函数repartition**
 
-  - 函数名称：repartition，此函数使用的谨慎，会产生Shuffle。
+  - 函数名称：**repartition**，此函数使用的谨慎，会产生Shuffle。
 
     ![image-20210406105430139](images/image-20210406105430139.png)
 
-  -  注意: repartition底层调用coalesce(numPartitions, shuffle=true)
+  -  注意: **repartition底层调用coalesce(numPartitions, shuffle=true)**
 
   
 
   
 
-- 2）、减少分区函数
-  - 函数名称：coalesce，shuffle参数默认为false,不会产生Shuffle，默认只能减少分区
+- 2）、**增加/减少分区函数 coalesce**
+  
+  - **默认是减少分区数**，如果设置的分区数大于原来的分区数，默认不做任何操作；
+  - **如果想增加分区数，第二个参数设置为true;**
+  - 函数名称：**coalesce**，shuffle参数默认为false,不会产生Shuffle，默认只能减少分区
   - 比如RDD的分区数目为10个分区，此时调用rdd.coalesce(12)，不会对RDD进行任何操作。
 
 ![image-20210406105544471](images/image-20210406105544471.png)
 
--  3）、调整分区函数
+-  3）、**自定义分区器-调整分区函数**
 
   - 在PairRDDFunctions中partitionBy函数：
 
@@ -761,9 +769,7 @@ object SparkPartitionTest {
 
 - 运行截图如下所示：
 
-![img](file:///C:\Users\tanghui\AppData\Local\Temp\ksohtml17780\wps4.jpg) 
-
-
+![image-20210607134507417](images/image-20210607134507417.png)
 
 - fold聚合函数，比reduce聚合函数，多提供一个可以初始化聚合中间临时变量的值参数：
 
@@ -773,13 +779,23 @@ object SparkPartitionTest {
 
 - 聚合操作时，往往聚合过程中需要中间临时变量（到底时几个变量，具体业务而定），如下案例：
 
-![img](file:///C:\Users\tanghui\AppData\Local\Temp\ksohtml17780\wps6.jpg) 
+![image-20210607134259093](images/image-20210607134259093.png)
 
  
 
 #### RDD中的聚合函数
 
-- 在RDD中提供类似列表List中聚合函数reduce和fold，查看如下：
+##### 总结
+
+- **sum、 reduce、 fold、aggregate**
+  - **sum:简单的求和；**
+  - **reduce：可以自定义计算方法（加减乘除）；**
+  - **fold:在reduce基础上 + 可初始化值；**
+  - **aggregate: 在fold基础上 + 分区内的计算方法 + 分区间的计算方法；**
+
+##### 案例
+
+- 在RDD中提供类似列表List中聚合函数**reduce和fold**，查看如下：
 
 ![img](images/wps7-1617678004621.jpg) 
 
@@ -789,19 +805,17 @@ object SparkPartitionTest {
 
 - 运行原理分析：
 
-![img](file:///C:\Users\tanghui\AppData\Local\Temp\ksohtml17780\wps9.jpg) 
+![image-20210607134311644](images/image-20210607134311644.png)
 
  
 
 - 使用RDD中fold聚合函数：
 
-![img](file:///C:\Users\tanghui\AppData\Local\Temp\ksohtml17780\wps10.jpg) 
-
- 
+ ![image-20210607134325449](images/image-20210607134325449.png)
 
 - 查看RDD中高级聚合函数aggregate，函数声明如下：
 
-![img](file:///C:\Users\tanghui\AppData\Local\Temp\ksohtml17780\wps11.jpg) 
+![image-20210607134338779](images/image-20210607134338779.png)
 
 ​		seqOp函数的第一个参数是累加器，第一次执行时，会把zeroValue赋给累加器。第一次之后会把返回值赋给累加器，作为下一次运算的第一个参数。
 
@@ -811,15 +825,15 @@ object SparkPartitionTest {
 
 业务需求：**使用aggregate函数实现RDD中最大的两个数据**，分析如下：
 
-![img](file:///C:\Users\tanghui\AppData\Local\Temp\ksohtml17780\wps12.jpg) 
+ ![image-20210607135001808](images/image-20210607135001808.png)
 
 核心业务代码如下：
 
-![img](file:///C:\Users\tanghui\AppData\Local\Temp\ksohtml17780\wps13.jpg) 
+![image-20210607135019766](images/image-20210607135019766.png)
 
 运行结果原理剖析示意图：
 
-![img](file:///C:\Users\tanghui\AppData\Local\Temp\ksohtml17780\wps14.jpg) 
+![image-20210607135034870](images/image-20210607135034870.png)
 
  
 
@@ -901,11 +915,27 @@ object SparkAggTest {
 
 
 
-#### PairRDDFunctions聚合函数
+#### 带有key的聚合函数
 
-​		在Spark中有一个object对象PairRDDFunctions，主要针对RDD的数据类型是Key/Value对的数据提供函数，方便数据分析处理。比如使用过的函数：reduceByKey、groupByKey等。<span style="color:red;background:white;font-size:20px;font-family:楷体;">***ByKey函数：将相同Key的Value进行聚合操作的，省去先分组再聚合。**</span>
+##### 总结
 
+- **groupByKey 、 reduceByKey、 foldByKey、aggregateByKey**
 
+  - **groupByKey:简单的求和；**
+  - **reduceByKey：可以自定义计算方法（加减乘除）；**
+  - **foldByKey:在reduce基础上 + 可初始化值；**
+  - **aggregateByKey: 在fold基础上 + 分区内的计算方法 + 分区间的计算方法；**
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**groupByKey 与 reduceByKey的区别是？**</span> 
+
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**reduceByKey 有预聚合；**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**groupByKey没有预聚合；**</span>
+
+  
+
+​		在Spark中有一个object对象PairRDDFunctions，主要针对RDD的数据类型是Key/Value对的数据提供函数，方便数据分析处理。比如使用过的函数：**reduceByKey、groupByKey**等。<span style="color:red;background:white;font-size:20px;font-family:楷体;">**ByKey函数：将相同Key的Value进行聚合操作的，省去先分组再聚合。**</span>
+
+##### 案例
 
 -  第一类：分组函数groupByKey
 
@@ -999,7 +1029,7 @@ object SparkAggTest {
 
   
 
-#### 面试题:groupByKey和reduceByKey
+#### 面试题:groupByKey和reduceByKey区别
 
 **RDD中groupByKey和reduceByKey区别？？？**
 
@@ -1008,13 +1038,29 @@ object SparkAggTest {
 ![image-20210406134120301](images/image-20210406134120301.png)
 
 - 
-  reduceByKey函数：在一个(K,V)的RDD上调用，返回一个(K,V)的RDD，使用指定的reduce函数，将相同key的值聚合到一起，reduce任务的个数可以通过第二个可选的参数来设置。有预聚合
+  reduceByKey函数：在一个(K,V)的RDD上调用，返回一个(K,V)的RDD，使用指定的reduce函数，将相同key的值聚合到一起，**reduce任务的个数可以通过第二个可选的参数来设置**。**有预聚合**
 
 ![image-20210406134131626](images/image-20210406134131626.png)
 
 
 
-### 3-4-5 关联函数
+### 3-4-5 join关联函数
+
+#### 总结：
+
+![img](images/wps21-1617688141988.jpg)
+
+- **join: 内关联；**
+- **leftOuterJoin: 左外关联；**
+- **rightOuterJoin: 右外关联；**
+- **fullOuterJoin:全关联；**
+- **union:合并，笛卡尔积；**
+
+- 关联条件：**以两个RDD 的两个key 关联；** 
+
+
+
+#### 原理：
 
 - 当两个RDD的数据类型为二元组Key/Value对时，可以依据Key进行关联Join。
 
@@ -1090,6 +1136,27 @@ object SparkJoinTest {
 
 
 ### 3-4-6 排序函数-求TopKey
+
+#### 总结：sortByKey 、sortBy
+
+- **sortByKey**
+  - **按照Key进行排序**，默认升序；
+  - **第一个参数为false 时，为降序**；
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**注意： 如果不指定第二个参数（分区数），默认只是分区内的排序；**</span>
+- **sortBy**
+  - **自定义排序规则**；
+  - **参数1：按照谁排序；**
+  - **参数2：升序(true),降序(false);**
+  - **参数3：指定分区数**,(<span style="color:red;background:white;font-size:20px;font-family:楷体;">**注意： 如果分区数不是1，只做分区内的排序**</span>)
+- **top**
+  - 如果是Key/Value对，**按照Key降序排序**;
+  - 参数1：求top 几；
+  - 参数2：**是个隐士参数，：Ordering.by() 。 指定使用哪个排序；**
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**注意：该算子仅用于结果数据比较小的时候，如果数据量大会oom Driver;**</span>
+
+
+
+#### 原理：
 
 ​		在上述词频统计WordCount代码基础上，对统计出的每个单词的词频Count，按照降序排序，获取词频次数最多Top3单词。
 
@@ -1178,9 +1245,34 @@ object WordCountTopKey {
 
 ![image-20210406135606997](images/image-20210406135606997.png)
 
+### 3-4-7 xxxPartitions算子
+
+#### 总结：
+
+**mapPartitions** 、**foreachPartitions** ......
+
+像这种带有Partitions 的算子都是**批处理**的算子。
+
+![image-20210607133532272](images/image-20210607133532272.png)
+
+主要功能：**大大减少的网络的IO次数；**
+
+- 例如：map 与 mapPartitions 对比
+  - 如果数据分为3个分区， 数据量分别是 3000条、2500条、3500条；
+  - map: 需要传递 3000 + 2500 + 3500 = 9000次； 
+  - mapPartitions ： 只需要传递3次（3个分区）；
+
 
 
 ## 3-5 课后练习-作业
+
+
+
+### swap 元组反转
+
+**tuple.swap;**
+
+
 
 ### map 算子
 
@@ -1317,7 +1409,7 @@ rdd2.values.collect
 
 ### mapValues 算子
 
-mapValues表示对RDD中的元素进行操作,Key不变,Value变为操作之后。
+mapValues表示对RDD中的元素进行操作,Key不变,**Value变为操作之后**。
 
 ![image-20210406140444082](images/image-20210406140444082.png)
 
@@ -1330,7 +1422,7 @@ val rdd2 = rdd1.mapValues(_*2).collect //_表示每一个value ,key不变,将函
 
 ### collectAsMap 算子
 
-当RDD中数据类型为Key/Value对时，转换为Map集合。
+当RDD中数据类型为Key/Value对时，**转换为Map集合**。
 
 ![image-20210406140522797](images/image-20210406140522797.png)
 
@@ -1367,25 +1459,37 @@ rdd1.mapPartitionsWithIndex(func).collect
 
 
 
-
-
-
-
 # 4- RDD持久化与Checkpoint
 
 ## 4-1 RDD 持久化
 
+### 总结：
+
+- 原因： **因为spark的rdd默认都是 过程数据, 临时的,用完就丢的,不能二次使用**.
+
+- 使用场景：**如果这些RDD后续还会频繁的被使用到，那么可以将这些RDD进行持久化/缓存**
+- 使用方法：
+  - **1- 缓存到内存：persist()，cache();**
+    - **cache() 底层调用的persist(StorageLevel.MEMORY_ONLY);**
+  - **2- 设置缓存级别：inputRDD.persist(StorageLevel.MEMORY_AND_DISK)**
+    - 将RDD以非序列化的Java对象存储在JVM中。**如果数据在内存中放不下，则溢写到磁盘上**．需要时则会从磁盘上读取
+  - **缓存函数与Transformation函数一样，都是Lazy操作**，需要Action函数触发，通常使用count函数触发。
+  - **释放缓存：**
+    - **rdd.unpersist();**
+
 ### 4-1-1 引入
 
-![image-20210406140722356](images/image-20210406140722356.png)
+
+
+<img src="images/image-20210406140722356.png" alt="image-20210406140722356" style="zoom:80%;" />
 
 如图,rdd2 如果被使用2次, 就会被 生产2次.
 
-因为spark的rdd默认都是 过程数据, 临时的,用完就丢的.
+**因为spark的rdd默认都是 过程数据, 临时的,用完就丢的**.
 
  
 
-​		在实际开发中某些RDD的计算或转换可能会比较耗费时间，如果这些RDD后续还会频繁的被使用到，那么可以将这些RDD进行持久化/缓存，这样下次再使用到的时候就不用再重新计算了，提高了程序运行的效率。
+​		在实际开发中某些RDD的计算或转换可能会比较耗费时间，**如果这些RDD后续还会频繁的被使用到，那么可以将这些RDD进行持久化/缓存**，这样下次再使用到的时候就不用再重新计算了，提高了程序运行的效率。
 
 ![image-20210406140741247](images/image-20210406140741247.png)
 
@@ -1494,6 +1598,17 @@ object SparkCacheTest {
 
 ## 4-2 RDD Checkpoint
 
+### 总结：
+
+- 原因：
+  - RDD 数据可以持久化，但是持久化/缓存可以把数据放在内存中，虽然是快速的，但是也是最**不可靠**的；也可以把数据放在磁盘上，**也不是完全可靠**的！例如磁盘会损坏等。
+- 优点：（**保存到HDFS中，容错 + 高可用**）
+  - **更加可靠的数据持久化，实现了RDD的容错和高可用**
+    - 在**Checkpoint的时候一般把数据放在在HDFS上**，这就天然的借助了HDFS天生的高容错、高可靠来实现数据最大程度上的安全；
+- 使用方法：
+  - **第一步:sc.setCheckpointDir("HDFS目录") //HDFS的目录**
+  - **第二步:rdd.checkpoint //后续会被多次频繁使用到的RDD/很重要的RDD**
+
 ### 4-2-1 引入
 
 - RDD 数据可以持久化，但是持久化/缓存可以把数据放在内存中，虽然是快速的，但是也是最不可靠的；也可以把数据放在磁盘上，也不是完全可靠的！例如磁盘会损坏等。
@@ -1550,26 +1665,26 @@ object SparkCkptTest {
 
 
 
-### 4-2-4 总结：持久化和Checkpoint的区别
+## 4-3 总结：持久化和Checkpoint的区别
 
 - 问题:
   缓存持久化 VS Checkpoint 开发中用哪个?
 - 答案:
-  缓存持久化(保证后续再次使用的速度) + Checkpoint(保证安全) 
+  **缓存持久化(保证后续再次使用的速度) + Checkpoint(保证安全)** 
 
 - 区别:
 
-  - 1）、存储位置
+  - 1）、**存储位置**
 
-    -  Persist 和 Cache 只能保存在本地的磁盘和内存中(或者堆外内存)；
-    - Checkpoint 可以保存数据到 HDFS 这类可靠的存储上；
+    -  **Persist 和 Cache 只能保存在本地的磁盘和内存中(或者堆外内存)；**
+    - **Checkpoint 可以保存数据到 HDFS 这类可靠的存储上；**
 
-  -  2）、生命周期
+  -  2）、**生命周期**
 
-    - Cache和Persist的RDD会在程序结束后会被清除或者手动调用unpersist方法；
-    - Checkpoint的RDD在程序结束后依然存在，不会被删除；
+    - Cache和Persist的RDD会在**程序结束后会被清除或者手动调用unpersist方法**；
+    - Checkpoint的RDD在程序结束后依然存在，**不会被删除**；
 
-  -  3）、Lineage(血统、依赖链、依赖关系)
+  -  3）、**Lineage(血统、依赖链、依赖关系)**
 
     - Persist和Cache，**不会丢掉RDD间的依赖链/依赖关系**，因为这种缓存是不可靠的，如果出现了一些错误(例如 Executor 宕机)，需要通过回溯依赖链重新计算出来；
     - **Checkpoint会斩断依赖链**，因为Checkpoint会把结果保存在HDFS这类存储中，更加的安全可靠，一般不需要回溯依赖链；
@@ -1597,11 +1712,27 @@ object SparkCkptTest {
 
 ## 5-1 广播变量
 
+
+
+### 总结：
+
+- 原因：
+  - rdd1(大) join rdd2(小)；
+  - **让一个Executor中的所有task 共用一个公有的数据rdd2；**
+
+- 使用方法：
+  - **发布广播变量**：val listBroadcast: Broadcast[List[String]] = **sc.broadcast(list)**
+  - **获取广播变量**： val listValue = **listBroadcast.value**
+
+### 原理：
+
 ​		广播变量允许开发人员在每个节点（Worker or Executor）缓存只读变量，而不是在Task之间传递这些变量。使用广播变量能够高效地在集群每个节点创建大数据集的副本。同时Spark还使用高效的广播算法分发这些变量，从而减少通信的开销。
 
 
 
 ![image-20210406141817070](images/image-20210406141817070.png)
+
+![image-20210607151825953](images/image-20210607151825953.png)
 
 可以通过调用**sc.broadcast(v)**创建一个广播变量，该广播变量的值封装在v变量中，可使用获取该变量value的方法进行访问。
 
@@ -1614,6 +1745,44 @@ object SparkCkptTest {
 
 
 ## 5-2 累加器
+
+### 总结：
+
+- 原因：
+
+  - **用于多个节点对一个变量进行共享性的操作**;
+
+- 特性：
+
+  - **多个task对一个变量并行操作的功能；**
+  - **task只能对Accumulator进行累加操作，不能读取Accumulator的值；**
+  - **只有Driver程序可以读取Accumulator的值**
+
+- 种类：
+
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**LongAccumulator用来累加整数型，**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**DoubleAccumulator用来累加浮点型，**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**CollectionAccumulator用来累加集合元素。**</span>
+
+- 使用方法：
+
+  - **定义累加器**：val accumulator: LongAccumulator = **sc.longAccumulator("mycounter")**
+  - **累加计算**：accumulator.**add**(1L)；
+  - **获取累加值**：accumulator.**value**
+
+- 扩展：
+
+  - **自定义累加器**
+
+    - **第一步、继承AccumulatorV2，实现相关方法；**
+    - **第二步、创建自定义Accumulator的实例，然后在SparkContext上注册它；**
+
+    ![image-20210607153024404](images/image-20210607153024404.png)
+
+- 注意：
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**累加器在Driver中；**</span>
+
+### 原理：
 
 ​		Spark提供的Accumulator，主要**用于多个节点对一个变量进行共享性的操作**。Accumulator只提供了累加的功能，即确提供了多个task对一个变量并行操作的功能。但是task只能对Accumulator进行累加操作，不能读取Accumulator的值，只有Driver程序可以读取Accumulator的值。创建的Accumulator变量的值能够在Spark Web UI上看到，在创建时应该尽量为其命名。
 
@@ -1638,7 +1807,9 @@ object SparkCkptTest {
 
 ## 5-3 案例演示
 
- 		以词频统计WordCount程序为例，假设处理的数据如下所示，包括非单词符合，统计数据词频时过滤非单词的特殊符号并且统计总的格式。
+```properties
+以词频统计WordCount程序为例，假设处理的数据如下所示，包括非单词符合，统计数据词频时过滤非单词的特殊符号并且统计总的格式。
+```
 
 ![image-20210406142347175](images/image-20210406142347175.png)
 
@@ -1740,7 +1911,7 @@ object SparkSharedVariableTest {
 
 
 
-# 6- 外部数据源-了解
+# 6- 外部数据源
 
 ![image-20210406142527099](images/image-20210406142527099.png)
 
@@ -1761,6 +1932,24 @@ https://blog.csdn.net/u011817217/article/details/81667115
 
 
 ## 6-1 Sequence  数据源
+
+### 总结：
+
+- **写：saveAsSequenceFile**
+
+  ``` scala
+  dataWithOne.coalesce(1).saveAsSequenceFile("data/output/seq")
+  ```
+
+- **读：sequenceFile**
+
+  ``` scala
+  val seqDataRDD: RDD[(Int, Int)] = sc.sequenceFile[Int, Int]("data/output/seq")
+  ```
+
+  
+
+​	
 
 - 写
 
@@ -1798,6 +1987,25 @@ def readDateFromSeq_Obj(sc: SparkContext): Unit = {
 
 ## 6-2 Obj 数据源
 
+### 总结
+
+- **写: saveAsObjectFile**
+
+  ``` scala
+  dataWithOne.coalesce(1).saveAsObjectFile("data/output/obj")
+  ```
+
+- **读:objectFile**
+
+  ``` scala
+  val objDataRDD = sc.objectFile[(Int,Int)]("data/output/obj")
+  objDataRDD.foreach(x => println(s"OBJ: ${x}  "))
+  ```
+
+  
+
+
+
 - 写
 
 ``` scala
@@ -1832,7 +2040,77 @@ def readDateFromSeq_Obj(sc: SparkContext): Unit = {
 
 ## 6-3 MySQL 数据源
 
-​		实际开发中常常将分析结果RDD保存至MySQL表中，使用foreachPartition函数；此外Spark中提供JdbcRDD用于从MySQL表中读取数据。
+### 总结：
+
+- **写入数据库的时候必须使用foreachPartition；**
+  - **将connection 和 PreparedStatement 都写在foreachPartition中；**
+  - **原因： jdbc连接构建如果在Driver,再传递给executor用是不行的。必须让每个executor都去连接MYSQL;**		
+    - **Driver序列化传输给Executor的只是对象的数据， 而无法将TCP连接传递给Executor使用；**
+
+- **写**  （将connection 和 PreparedStatement 都写在foreachPartition中）
+
+``` scala
+rdd.foreachPartition(dataToMySQL) //方法即函数,函数即对象
+
+def dataToMySQL(itar: Iterator[(String, Int)]): Unit = {
+    //0.加载驱动
+    //Class.forName("") //源码中已经加载了
+    //1.获取连接
+    val connection: Connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/bigdata?characterEncoding=UTF-8","root","root")
+    //2.编写sql
+    val sql:String = "INSERT INTO `t_student` (`name`, `age`) VALUES (?, ?);"
+    //3.获取ps
+    val ps: PreparedStatement = connection.prepareStatement(sql)
+    itar.foreach(data=>{
+      //4.设置参数
+      ps.setString(1,data._1)
+      ps.setInt(2,data._2)
+      //5.执行sql
+      ps.addBatch()
+    })
+    ps.executeBatch()
+    ps.close()
+    connection.close()
+  }
+```
+
+- **读  JdbcRDD**
+
+``` scala
+val getConnection = ()=> DriverManager.getConnection(
+        "jdbc:mysql://localhost:3306/bigdata?characterEncoding=UTF-8",
+        "root",
+        "root")
+      
+    // 源码要求: 必须有占位符;
+    val sql:String = "select id,name,age from t_student where id >= ? and id <= ?"
+      
+    val mapRow = (rs:ResultSet) => {
+      val id: Int = rs.getInt(1)
+      val name: String = rs.getString(2)
+      val age: Int = rs.getInt("age")
+      (id,name,age)
+    }
+      
+    val studentRDD: JdbcRDD[(Int, String, Int)] = new JdbcRDD(
+        sc,
+        getConnection,// 构建connection 的函数（让每个Executor都去连接mysql）
+        sql,
+        4,
+        5,
+        2,
+        mapRow)  // 获取结果的函数
+      
+    println(studentRDD.collect().toBuffer)
+```
+
+
+
+
+
+### 原理：
+
+​		实际开发中常常将分析结果RDD保存至MySQL表中，使用**foreachPartition函数**；此外Spark中提供**JdbcRDD用于从MySQL表中读取数据**。
 
 ​		调用RDD foreachPartition函数将每个分区数据保存至MySQL表中，保存时考虑降低RDD分区数目和批量插入，提升程序性能。
 
@@ -1870,21 +2148,37 @@ object SparkJdbcDataSource {
     class JdbcRDD[T: ClassTag](
     sc: SparkContext,
     getConnection: () => Connection,
-    sql: String,
-    lowerBound: Long,
-    upperBound: Long,
-    numPartitions: Int,
-    mapRow: (ResultSet) => T = JdbcRDD.resultSetToObjectArray _)
+    sql: String,// 源码要求: 必须有占位符;
+    lowerBound: Long,	// 指定开始边界值
+    upperBound: Long,	// 指定结束边界值
+    numPartitions: Int,  // 指定分区数量
+    mapRow: (ResultSet) => T = JdbcRDD.resultSetToObjectArray _
+    )
      */
-    val getConnection = ()=> DriverManager.getConnection("jdbc:mysql://localhost:3306/bigdata?characterEncoding=UTF-8","root","root")
+    val getConnection = ()=> DriverManager.getConnection(
+        "jdbc:mysql://localhost:3306/bigdata?characterEncoding=UTF-8",
+        "root",
+        "root")
+      
+    // 源码要求: 必须有占位符;
     val sql:String = "select id,name,age from t_student where id >= ? and id <= ?"
+      
     val mapRow = (rs:ResultSet) => {
       val id: Int = rs.getInt(1)
       val name: String = rs.getString(2)
       val age: Int = rs.getInt("age")
       (id,name,age)
     }
-    val studentRDD: JdbcRDD[(Int, String, Int)] = new JdbcRDD(sc,getConnection,sql,4,5,2,mapRow)
+      
+    val studentRDD: JdbcRDD[(Int, String, Int)] = new JdbcRDD(
+        sc,
+        getConnection,// 构建connection 的函数（让每个Executor都去连接mysql）
+        sql,
+        4,
+        5,
+        2,
+        mapRow)  // 获取结果的函数
+      
     println(studentRDD.collect().toBuffer)
   }
 
@@ -1915,11 +2209,17 @@ object SparkJdbcDataSource {
 }
 ```
 
+- 使用JdbcRDD 读取mysql 中的数据封装到样例类中
+
+![image-20210607165829069](images/image-20210607165829069.png)
+
+
+
 
 
 ## 6-4 HBase 数据源
 
-​		Spark可以从HBase表中读写（Read/Write）数据，底层采用**TableInputFormat**和**TableOutputFormat**方式，与MapReduce与HBase集成完全一样，使用输入格式InputFormat和输出格式OutputFoamt。
+​		Spark可以从HBase表中读写（Read/Write）数据，底层采用**TableInputFormat**和**TableOutputFormat**方式，与MapReduce与HBase集成完全一样，使用输入格式InputFormat和输出格式OutputFormat。
 
 
 
@@ -1936,6 +2236,21 @@ object SparkJdbcDataSource {
 ​		HBase Client连接时，需要设置依赖Zookeeper地址相关信息及表的名称，通过Configuration设置属性值进行传递。
 
 ​	![image-20210406143719628](images/image-20210406143719628.png)
+
+``` java
+// 构建HBase Client配置信息
+val conf: Configuration = HBaseConfiguration.create()
+    
+// 设置连接Zookeeper属性
+conf.set("hbase.zookeeper.quorum", "node1")
+conf.set("hbase.zookeeper.property.clientPort", "2181")
+conf.set("zookeeper.znode.parent", "/hbase")
+    
+// 设置将数据保存的HBase表的名称
+conf.set(TableOutputFormat.OUTPUT_TABLE, "htb_wordcount")
+```
+
+
 
 范例演示：将词频统计结果保存HBase表，表的设计
 
@@ -2034,9 +2349,13 @@ object SparkWriteHBase {
 
 ### Hbase source
 
-​		回顾MapReduce从读HBase表中的数据，使用TableMapper，其中InputFormat为**TableInputFormat**，读取数据Key：**ImmutableBytesWritable**，Value：**Result**。
+回顾MapReduce从读HBase表中的数据，使用TableMapper
 
-  	
+- 其中InputFormat为**TableInputFormat**，
+- 读取数据Key：**ImmutableBytesWritable**，
+- Value：**Result**。
+
+  ​	
 
 ​		从HBase表读取数据时，同样需要设置依赖Zookeeper地址信息和表的名称，使用Configuration设置属性，形式如下：
 
@@ -2044,7 +2363,7 @@ object SparkWriteHBase {
 
    
 
-​		此外，读取的数据封装到RDD中，Key和Value类型分别为：***\*ImmutableBytesWritable和Result,\****不支持Java Serializable导致处理数据时报序列化异常。设置Spark Application使用Kryo序列化，性能要比Java 序列化要好，创建SparkConf对象设置相关属性，如下所示：
+​		此外，读取的数据封装到RDD中，Key和Value类型分别为：**ImmutableBytesWritable和Result**不支持Java Serializable导致处理数据时报序列化异常。**设置Spark Application使用Kryo序列化**，性能要比Java 序列化要好，创建SparkConf对象设置相关属性，如下所示：
 
 ![img](images/wps27-1617690890512.jpg) 
 
@@ -2119,11 +2438,26 @@ object SparkReadHBase {
 }
 ```
 
+- 上课老师代码
 
+![image-20210607183920508](images/image-20210607183920508.png)
 
 
 
 # 7- 案例-SogouQ日志分析
+
+总结：
+
+- 分析技术：
+  - **HanLP 中文分词**
+    - **HanLP.segment("杰克奥特曼全集视频")**
+  - **java List 转scala** 
+    - **asScala 方法**
+  - 
+
+
+
+
 
 ​		使用搜狗实验室提供【用户查询日志(SogouQ)】数据，使用Spark框架，将数据封装到RDD中进行业务数据处理分析。数据网址：http://www.sogou.com/labs/resource/q.php
 
@@ -2272,7 +2606,9 @@ object Demo2_SparkRDDExample {
                 terms.asScala.map(_.word)
                         .filter(x =>{
                             if (x == "+" || x == "." )
-                                false else true
+                                false 
+                            else 
+                            	true
                         })
             })
         })
@@ -2347,19 +2683,19 @@ object Demo2_SparkRDDExample {
 
 区分RDD之间的依赖为宽依赖还是窄依赖，主要在于**父RDD分区数据与子RDD分区数据关系**：
 
-- 窄依赖：父RDD的一个分区只会被子RDD的一个分区依赖；
+- 窄依赖：**父RDD的一个分区只会被子RDD的一个分区依赖**；
 
--  宽依赖：父RDD的一个分区会被子RDD的多个分区依赖，涉及Shuffle；
+-  宽依赖：**父RDD的一个分区会被子RDD的多个分区依赖，涉及Shuffle**；
 
 
 
 为什么要设计宽窄依赖？？
 
 -  1）、对于窄依赖来说
-  - Spark可以并行计算
-  - 如果有一个分区数据丢失，只需要从父RDD的对应个分区重新计算即可，不需要重新计算整个任务，提高容错。
+  - **Spark可以并行计算**
+  - 如果有一个分区数据丢失，只需要从父RDD的对应个分区重新计算即可，不需要重新计算整个任务，**提高容错。**
 -  2）、对应宽依赖来说
-  - 划分Stage的依据，产生Shuffle
+  - **划分Stage的依据，产生Shuffle**
 
 
 
@@ -2392,14 +2728,28 @@ object Demo2_SparkRDDExample {
 
 ![image-20210408104509623](images/image-20210408104509623.png)
 
-​		在Spark中，DAG生成的流程关键在于**回溯**，在程序提交后，高层调度器将所有的RDD看成是一个Stage，然后对此Stage进行从后往前的回溯，遇到Shuffle就断开，遇到窄依赖，则归并到同一个Stage。等到所有的步骤回溯完成，便生成一个DAG图。
+​		在Spark中，DAG生成的流程关键在于**回溯**，在程序提交后，高层调度器将所有的RDD看成是一个Stage，然后对此Stage进行**从后往前的回溯**，**遇到Shuffle就断开，遇到窄依赖，则归并到同一个Stage**。等到所有的步骤回溯完成，便生成一个DAG图。
 
 ![image-20210408104548929](images/image-20210408104548929.png)
 
-​		把DAG划分成互相依赖的多个Stage，**划分依据是RDD之间的宽依赖**，Stage是由一组并行的Task组成。Stage切割规则：**从后往前，遇到宽依赖就切割Stage**。
-​		
+- 把DAG划分成互相依赖的多个Stage；
+- **划分依据是RDD之间的宽依赖**；
+- Stage是由一组**并行的Task组成**；
+- Stage切割规则：**从后往前，遇到宽依赖就切割Stage**。
+  ​	
 
-​		Stage计算模式：**pipeline管道计算模式**，pipeline只是一种计算思想、模式，来一条数据然后计算一条数据，把所有的逻辑走完，然后落地。准确的说：**一个task处理一串分区的数据，整个计算逻辑全部走完**。
+
+
+​	**Stage计算模式**	
+
+- Stage计算模式：**pipeline管道计算模式**；
+  - pipeline只是一种计算思想、模式，来一条数据然后计算一条数据，把所有的逻辑走完，然后落地；
+- 准确的说：**一个task处理一串分区的数据，整个计算逻辑全部走完**。
+- **每个算子可以看作一个task;**
+- **再同一个stage中多个算子之间（窄依赖）组成一个taskSet;**
+- **一个taskSet 就是就是i一个PipLine；**
+- **多个taskSet 组成一个Stage;**
+- **一个taskSet 中可以内存迭代；**
 
 ![image-20210408104831702](images/image-20210408104831702.png)
 
@@ -2407,7 +2757,7 @@ object Demo2_SparkRDDExample {
 
 
 
-上图是分区完全一致的情况下,阶段内是100%的内存迭代
+**上图是分区完全一致的情况下,阶段内是100%的内存迭代**
 
  
 
@@ -2415,10 +2765,11 @@ object Demo2_SparkRDDExample {
 
 ![img](images/wps4-1617850124457.jpg)
 
-- 总结:
-  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**通过阶段划分,可以确保阶段内全部是窄依赖.同时,如果分区一致,全部是内存迭代.**</span>
-  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**只有宽依赖才走网络.**</span>（窄依赖中当分区不一样时也会走网络）
-  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**阶段划分的意义就在于,让大部分数据在内存中完成迭代.只有无可避免的时候(宽依赖)才会走网络传输**</span>
+### 总结:
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**通过阶段划分,可以确保阶段内全部是窄依赖.同时,如果分区一致,全部是内存迭代.**</span>
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**只有宽依赖才走网络.**</span>（**窄依赖中当分区不一样时也会走网络**）
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**阶段划分的意义就在于,让大部分数据在内存中完成迭代.只有无可避免的时候(宽依赖)才会走网络传输**</span>
 
 
 
@@ -2471,7 +2822,9 @@ The following table summarizes terms you’ll see used to refer to cluster conce
 
  
 
-首先，MR的计算模型中，只有2个算子，一个Map 一个Reduce。
+- 首先，**MR的计算模型中，只有2个算子，一个Map 一个Reduce**。
+  - **M->R 的迭代需要走HDFS 硬盘；**
+  - **同时两个MR之间也需要通过HDFS硬盘；**
 
 仅有的两个算子，就导致了许多复杂的任务很难用这两个算子计算出来。
 
@@ -2502,15 +2855,16 @@ The following table summarizes terms you’ll see used to refer to cluster conce
 
  
 
-为什么可以内存传输或者网络直传呢？
+**为什么可以内存传输或者网络直传呢？**
 
-- Spark的最小执行单位是Task也就是单个线程。Task运行在Executor内。一个节点可以有多个Executor，一个集群可以有多个节点。
-
-- 一个算子可以被并行执行，每个并行就是一个线程（一个task）
-
-- 如果算子A的所有Task在Executor1、3中执行，算子B的所有Task运行在Executor2、4中执行。
-
-算子AB的关系是 先计算A然后基于A的结果计算B
+- **内存传输**
+  - **分布式集群有多个节点；**
+  - **一个节点有多个Executor;**
+  - **一个Executor有多个Task;**
+  - **Spark的最小执行单位是Task也就是单个线程;**
+  - **一个算子可以被并行执行，每个并行就是一个线程（一个task）**
+- **网络传输**
+  - 如果算子A的所有Task在Executor1、3中执行，算子B的所有Task运行在Executor2、4中执行。算子AB的关系是 先计算A然后基于A的结果计算B
 
  
 
@@ -2546,38 +2900,38 @@ Spark会尽量安排DAG中的数据流转在内存中流转。尽量避免网络
 
 
 
-- 1.Application：
+- 1.**Application**：
   - 应用,就是程序员编写的Spark代码,如WordCount代码
 
  
 
-- 2.Driver：
+- 2.**Driver 任务调度、分配**：
   - 驱动,就是用来执行main方法的JVM进程,里面会执行一些Driver端的代码,如创建SparkContext,设置应用名,设置日志级别...
 
  
 
-- 3.SparkContext:	
-  - Spark运行时的上下文环境,用来和ClusterManager进行通信的,并进行资源的申请、任务的分配和监控等
+- 3.**SparkContext 上下文环境**:	
+  - Spark运行时的上下文环境,用来和ClusterManager(**AppMaster**)进行通信的,并进行资源的申请、任务的分配和监控等
 
  
 
-- 4.ClusterManager：
-  - 集群管理器,对于Standalone模式,就是AppMaster,对于Yarn模式就是ResourceManager/ApplicationMaster,在集群上做统一的资源管理的进程
+- 4.**ClusterManager 集群管理器**：
+  - 集群管理器,对于Standalone模式,就是**AppMaster,**对于Yarn模式就是ResourceManager/ApplicationMaster,在集群上做统一的资源管理的进程
 
  
 
-- 5.Worker:
+- 5.Worker: （**只有StandAlone模式下才有Master  和 Worker**）
   - 工作节点,是拥有CPU/内存的机器,是真正干活的节点。Yarn模式中就是nodeManager
 
  
 
-- 6.Executor：
+- 6.**Executor 进程**：
   - 运行在Worker中的JVM进程!
 
  
 
 - 7.RDD：
-  - 弹性分布式数据集
+  - **弹性分布式数据集**
 
  
 
@@ -2588,16 +2942,17 @@ Spark会尽量安排DAG中的数据流转在内存中流转。尽量避免网络
 
 - 9.Job：
   - 作业,按照DAG进行执行就形成了Job---按照图动态的执行
+  - **一个Action 就是一个Job;**
 
  
 
 - 10.Stage：
-  - DAG中,根据shuffle依赖划分出来的一个个的执行阶段!
+  - DAG中,根据**shuffle 宽依赖划分出来**的一个个的执行阶段!
 
  
 
 - 11.Task：
-  - 一个分区上的一系列操作(pipline上的一系列操作)就是一个Task,同一个Stage中的多个Task可以并行执行!(每一个Task由线程执行),所以也可以这样说:Task(线程)是运行在Executor(进程)中的最小单位!
+  - 一个分区上的一系列操作（算子）(pipline上的一系列操作)就是一个Task,同一个Stage中的多个Task可以并行执行!(每一个Task由线程执行),所以也可以这样说:Task(线程)是运行在Executor(进程)中的最小单位!
 
  
 
@@ -2630,17 +2985,27 @@ Spark会尽量安排DAG中的数据流转在内存中流转。尽量避免网络
 
     
 
-  - 4.SparkContext根据RDD的依赖关系构建成DAG图，并提交给DAGScheduler进行解析划分成Stage，并把该Stage中的Task组成的Taskset发送给TaskScheduler。
+  - 4.SparkContext**根据RDD的依赖关系构建成DAG图**，并提交给**DAGScheduler进行解析划分成Stage**，并把该**Stage中的Task组成的Taskset发送给TaskScheduler**。
 
     
 
-  - 5.TaskScheduler将Task发放给Executor运行，同时SparkContext将应用程序代码发放给Executor。
+  - 5.**TaskScheduler将Task发放给Executor运行**，同时SparkContext将应用程序代码发放给Executor。
 
     
 
   - 6.Executor将Task丢入到线程池中执行，把执行结果反馈给任务调度器，然后反馈给DAG调度器，运行完毕后写入数据并释放所有资源。
 
+    
 
+### Spark运行基本流程总结：
+
+- **Driver 创建入口SparkContext 、DAGScheduler 、TaskScheduler；**
+- **SparkContext 想ResouceManager 申请资源；**
+- **ResourceManager 分配nodeManager上的资源并启动Executor, Executor与ResourceManager心跳包；**
+- **SparkContext 根据RDD 依赖关系构建DAG并交给DAGScheduler；**
+- **DAGScheduler 划分Stage,并将Stage 中的Task提交给TaskScheduler 管理；**
+- **TaskScheduler 将Task 分配给Executor 去执行；**
+- **Executor执行完后反馈结果给Driver,并释放资源；**
 
 ![image-20210408110758396](images/image-20210408110758396.png)
 
@@ -2666,6 +3031,8 @@ Spark的任务调度总体来说分两路进行:**Stage级的调度和Task级的
 
 总结： 一个Spark应用程序包括Job、Stage及Task：
 
+- **一个Job 就有一个DAG;**
+
 -  <span style="color:red;background:white;font-size:20px;font-family:楷体;">**Job/DAG是以Action方法为界，遇到一个Action方法则触发一个Job；**</span>
 
 -  <span style="color:red;background:white;font-size:20px;font-family:楷体;">**Stage是Job的子集，以RDD宽依赖(即Shuffle)为界，遇到Shuffle做一次划分；**</span>
@@ -2678,28 +3045,35 @@ Spark的任务调度总体来说分两路进行:**Stage级的调度和Task级的
 
 ## 8-7 扩展阅读：Spark并行度
 
-​		Spark作业中，各个stage的task/partitions/parallelism数量，代表了Spark作业在各个阶段stage的并行度！
+​		Spark作业中，**各个stage的task/partitions/parallelism数量**，代表了Spark作业在各个阶段stage的并行度！
 
 ### 8-7-1 资源并行度与数据并行度
 
 在Spark Application运行时，并行度可以从两个方面理解：
 
--  1）、资源的并行度(资源总量)：由节点数(executor)和cpu数(core)决定的
+-  1）、**资源的并行度(资源总量)：由节点数(executor)和cpu数(core)决定的**
 
--  2）、处理的并行度(计算的时候的分区数)：task的数据，partition大小
+-  2）、**处理的并行度(计算的时候的分区数)：task的数据，partition大小**
 
   - task又分为map时的task和reduce(shuffle)时的task；
 
-  - task的数目和很多因素有关，资源的总core数，spark.default.parallelism参数，spark.sql.shuffle.partitions参数，读取数据源的类型,shuffle方法的第二个参数,repartition的数目等等。
+  - task的数目和很多因素有关:
 
+    - 资源的总core数，
+    - spark.default.parallelism参数，
+    - spark.sql.shuffle.partitions参数，
+    - 读取数据源的类型,
+    - shuffle方法的第二个参数,
+    - repartition的数目等等。
     
-
+    
+    
     如果core有多少Task就有多少，那么有些比较快的task执行完了，一些资源就会处于等待的状态。
     如果Task的数量多，能用的资源也多，那么并行度自然就好。
     如果Task的数据少，资源很多，有一定的浪费，但是也还好。
     如果Task数目很多，但是资源少，那么会执行完一批，再执行下一批。
-    所以官方给出的建议是，这个Task数目要是core总数的2-3倍为佳。
-
+    所以官方给出的建议是，**这个Task数目要是core总数的2-3倍为佳。**
+    
     
 
 ### 8-7-2 案例1
@@ -2747,7 +3121,11 @@ Spark的任务调度总体来说分两路进行:**Stage级的调度和Task级的
 
 
 
-## 8-8 扩展阅读：Spark Shuffle
+## 8-8 Spark Shuffle 机制 （面试重点）
+
+
+
+### 8-8-1 原理
 
 https://blog.csdn.net/u012369535/article/details/90757029
 
@@ -2777,3 +3155,230 @@ Spark的Shuffle分为**Write和Read两个阶段，分属于两个不同的Stage*
 具体各阶段Shuffle如何实现，如下：
 
 ![img](images/wps1-1617848753926.jpg)
+
+### 8-8-2 总结
+
+#### 8-8-2-1 Spark的shuffle机制如何理解？
+
+1. 在RDD之间出现了<span style="color:red;background:white;font-size:20px;font-family:楷体;">**宽依赖**</span>的时候会出现Shuffle机制；
+2. shuffle分为两个阶段 ： **上游stage的writeshuffle ，下游stage的readshuffle;**
+3. Spark 目前使用shuffle实现方式是： **Sort Shuffle**;
+4. **Sort Shuffle 实现流程（普通机制）：**
+   - **先将数据写入内存数据结构中；**
+   - **每写一条数据进入内存数据结构，就会判断是否达到了Storage内存的临界值；**
+   - **如果d达到临界值就会将内存数据结构中的数据溢写到磁盘中；**
+   - **再溢写之前需要根据key排序；（方便生成index文件查询使用）**
+   - **每次溢写后都会生成一个文件，最后将这些文件合并成一个大的数据文件和一个index文件；** 
+   - **最后下游的stage根据index文件去读取数据文件；**
+
+
+
+![image-20210515114954333](images/image-20210515114954333.png)
+
+
+
+
+
+#### 8-8-2-2 ShuffleWriter分为几类？
+
+- **ShuffleWriter分为三类：**
+
+  - **ByPassMergeSortShuffleWriter:**
+
+    - **没有使用map端预聚合；比如使用的groupbykey;**
+
+    - **分区数小于参数：spark.shuffle.sort.bypassMergeThreshold  默认：200；**
+
+      
+
+  - **UnsafeShuffleWriter:**
+
+    - **判断序列化支持relacaotion;**
+
+    - **有定义聚合器；**
+
+    - **分区数小于16777215；**
+
+      
+
+  - **SortShuffleWriter:**
+
+    - **不满足上面的条件就使用sortshufflewriter;**
+
+    
+
+![image-20210515115919742](images/image-20210515115919742.png)
+
+
+
+
+
+## 8-9 Spark的内存管理
+
+
+
+
+
+![image-20210515113645847](images/image-20210515113645847.png)
+
+- 当内存不足时序列化到磁盘中，Spark有两种序列化
+  - **java序列化；**
+  - **kryo序列化； 10倍；**
+
+
+
+
+
+## 8-10 如何选择缓存级别；![image-20210515113510872](images/image-20210515113510872.png)
+
+
+
+# 9- 面试题：
+
+## 9-1 spark-submit 面试题
+
+![image-20200902145040924](images/image-20200902145040924.png)
+
+## 9-2 简单介绍一下DAG
+
+- **DAG 叫做有向无环图；**
+- **是根据RDD的一个依赖关系构建的，RDD的迭代关系图；**
+- **一个Action算子就是一个DAG/JOb;**
+- **DAG 根据宽依赖划分Stage;**
+- **Stage中的Task分发给Executor去运行计算；**
+
+## 9-3 简单介绍一下Job的基本流程
+
+- **Driver 创建入口SparkContext 、DAGScheduler 、TaskScheduler；**
+- **SparkContext 想ResouceManager 申请资源；**
+- **ResourceManager 分配nodeManager上的资源并启动Executor, Executor与ResourceManager心跳包；**
+- **SparkContext 根据RDD 依赖关系构建DAG并交给DAGScheduler；**
+- **DAGScheduler **
+  - **划分Stage和tasks;**
+  - **准备提交Stage;**
+  - **并将Stage 中的Tasks提交给TaskScheduler 管理；**
+- **TaskScheduler**
+  - **管理、调度所有Task；**
+  - **将Task 分配给Executor 去执行；**
+  - **重试失败的任务**；
+- **Executor执行完后反馈结果给Driver,并释放资源；**
+
+
+
+## 9-4 简单介绍一下Spark的shuffle 机制；
+
+1. 在RDD之间出现了<span style="color:red;background:white;font-size:20px;font-family:楷体;">**宽依赖**</span>的时候会出现Shuffle机制；
+2. shuffle分为两个阶段 ： **上游stage的writeshuffle ，下游stage的readshuffle;**
+3. Spark 目前使用shuffle实现方式是： **byPass 、UnsafeShuffleWriter 、Sort Shuffle;**
+4. **Sort Shuffle 实现流程（普通机制）：**
+   - **先将数据写入内存数据结构中；**
+   - **每写一条数据进入内存数据结构，就会判断是否达到了Storage内存的临界值；**
+   - **如果d达到临界值就会将内存数据结构中的数据溢写到磁盘中；**
+   - **再溢写之前需要根据key排序；（方便生成index文件查询使用）**
+   - **每次溢写后都会生成一个文件，最后将这些文件合并成一个大的数据文件和一个index文件；** 
+   - **最后下游的stage根据index文件去读取数据文件；**
+
+## 9-5 介绍一下Spark并行度
+
+- Spark并行度分为两个：
+
+  - **资源的并行度(资源总量)：由节点数(executor)和cpu数(core)决定的**
+
+  - **处理的并行度(计算的时候的分区数)：task的数据，partition大小**
+
+    - task又分为map时的task和reduce(shuffle)时的task；
+    - task的数目和很多因素有关:
+
+      - 资源的总core数，
+      - spark.default.parallelism参数，
+      - spark.sql.shuffle.partitions参数，
+      - 读取数据源的类型,
+      - shuffle方法的第二个参数,
+      - repartition的数目等等。
+
+    
+
+## 9-6 介绍一下Spark 内存管理
+
+### 9-6-1 内存分配
+
+- **总内存**
+  - **预留内存（300M）当总内存非常大时，可以忽略；**
+  - **可用内存：usable memory;**
+    - **其他内存：用于用户自定义的数据结构以及spark的元数据存储；**
+    - **统一内存：用于Storage 和 Exection 的内存；**
+      - **Storage 内存：用于存放RDD 数据；**
+      - **Exection内存：用于存放Shuffle时生成的临时数据；**
+
+![image-20210515113205376](images/image-20210515113205376.png)
+
+### 9-6-2 内存动态占用机制
+
+- 规则如下：
+  - 设定基本的**存储内存(storage)和执行内存(execution**)区域:spark.storage.storageFraction
+  - 双方的空间**都不足时**， 则**溢写到硬盘**；
+  - **若自己的空间不足，而对方有空余时**，<span style="color:red;background:white;font-size:20px;font-family:楷体;">**可借用对方的空间；(存储空间不足：不足存放一个完整的block)**</span>
+  - **执行空间不足时，如果有被对方占用的空间**，<span style="color:red;background:white;font-size:20px;font-family:楷体;">**可以让对方见该数据溢写到磁盘中，强制要回空间；**</span>
+  - **存储空间不足时，如果有被对方占用的空间**，<span style="color:red;background:white;font-size:20px;font-family:楷体;">**无法让对方“归还”，因为Shuffle过程复杂，优先级高；**</span>
+
+![image-20210515113226835](images/image-20210515113226835.png)
+
+
+
+
+
+## 9-7 Spark如何实现容错？
+
+1. Spark会首先查看内存中是否已经**cache或persist**当前的rdd的链条;
+2. 否则查看**linage**是否**checkpoint值hdfs中**;
+3. **重建rdd**
+
+
+
+## 9-8 Spark的任务执行?
+
+1-Spark一个Application拥有**多个job**，**一个action**操作会出发**一个Job(DAG)**划分
+2-Spark**一个Job/DAG有多个Stages**，发生**shuffle**操作触发一个Stage的划分
+3-**一个Stage有很多个tasksets**，**一个RDD的不同的分区就是代表的taskset**，很多的taskset组成tasksets
+4-一个taskset由很多个RDD的分区组成，**一个RDD的分区的数据需要由一个task线程拉取执行，而不是进程**
+
+
+
+## 9-9 Spark的rdd的算子有几种类型？
+
+- transformation和action类型；
+
+
+
+## 9-10 Spark的Transformation算子有几类？
+
+- 3类
+  - **单value**：如mapValue，map，filter
+  - **双value**：union，zip，distinct
+  - **key-value类型**：reduceBykey(一定不属于Action算子)，foldByKey
+
+## 9-11 RDD创建的三种方法？
+
+- sc.textfile；
+- sc.makerdd/paralleise；
+- RDD之间的转换
+
+
+
+## 9-12 如何选择缓存级别；
+
+- **Spark建议如何选择cache或persist的级别？**
+
+  - 尽可能的放到**内存**；
+  - 如果内存放不下， 尝试使用基于序列化，可以使用**kryo序列化**；
+  - 一般不要放在磁盘，除非这个算子非常昂贵；
+
+- **如何释放缓存？**
+
+  - unpersist();
+  - **LRU机制**：最近最少使用；
+
+  
+
+![image-20210515113510872](images/image-20210515113510872.png)
+

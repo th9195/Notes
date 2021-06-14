@@ -1657,3 +1657,174 @@ IOTA大数据架构，主要有如下几个特点：
   - 比如典型的窗口计算，就是有状态的计算。
   - 以及聚合的场景，分组的场景等都是有状态的。
   - 同时CheckPoint恢复的状态就是有状态计算中需求的外部数据。
+
+
+
+
+
+# 6- 面试题
+
+## 6-0 简单介绍一下Spark Streaming
+
+- Spark Streaming 是一个**流式计算框架**；
+- 对**无界数据**进行连续不断的处理、聚合和分析；
+- 底层使用的技术模式是**微批处理模式**；
+
+
+
+## 6-1 什么叫离线计算，什么叫流式计算？
+
+- 离线计算/批处理计算：
+  - 一批**有界数据**放在那里，等着你一次性处理掉；
+- 流式计算/实时计算：
+  - 源源不断的**无界数据**实时处理；
+
+- 有界数据：
+  - 有明确的开始和结束；
+- 无界数据（流数据）：
+  - 有明确的开始， 没有明确的结束；
+
+## 6-2 流计算模式有几种？
+
+- **原生流处理(Native)**
+  - Storm 和 Flink;
+  - 所有输入记录会一条一条的处理；
+
+- **微批处理(Batch)**
+  - Spark Streaming 和 Structured Streaming；
+  - 将输入的数据一某一时间间隔T,切分多个微批量数据；然后催每个批量数据处理；
+  - 缺点： 实时性不够；延迟高；
+
+## 6-3 简单介绍一下Spark Streaming的数据结构（数据抽象）
+
+- 数据结构：**DStream** ；
+- DStream可以按照秒、分等时间间隔将数据流进行批量的划分；
+- **DStream代表了一种连续的数据流**，要么从某种数据源提取数据，要么从其他数据流映射转换而来。
+- **DStream内部是由一系列连续的RDD组成的**，每个RDD都包含了特定时间间隔内的一批数据，
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**DStream：在时间线上的一组RDD集合**</span>
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**DStream：是不间断的 连续的数据对象(内容是无边界的)**</span>
+
+
+
+## 6-4 DStream有几种算子？
+
+- **transformation算子；**
+- **Output算子；** 就是Action算子；
+
+
+
+## 6-5 介绍一下Spark框架的几个执行入口
+
+- **SparkCore : SparkContext;**
+- **SparkSQL: SparkSession;**
+- **SparkStreaming: StreamingContext;**
+
+
+
+## 6-6 介绍一下SparkStreaming的状态计算
+
+- **无状态计算**
+  - 数据计算无需依赖历史数据；一批数据单独过来处理即可；
+- **有状态计算**
+  - 数据依赖历史数据才能完成计算；
+  - **UpdateStateByKey（饿汉式）；**
+    - **需要设置一个checkpoint目录，开启checkpoint机制；**
+    - 缺点：**不管这个key 是否有新数据来，也会返回所有key的数据；**
+    - **支持状态恢复**；（重点）
+  - **mapWithState（懒汉式）**
+    - **需要设置一个checkpoint目录，开启checkpoint机制；**
+    - 优点：**只计算更新的数据；**
+    - **不支持状态恢复；**
+- Spark一般都是用的有状态计算；
+  - **窗口计算**；
+
+### 6-6-2 SparkStreaming状态恢复？
+
+- **只有UpdateStateByKey（饿汉式）支持状态恢复；**
+
+
+
+## 6-7 介绍一下SparkStreaming 的窗口
+
+- 窗口就是将无界数据流，人为在其中划分出一节节的有界数据；
+- **SparkStreaming 中微批是窗口的最小单元；**
+  - StreamingContext的微批处理间隔是5s;
+  - 那么在设置窗口的时候，窗口长度必须是微批的整数倍；
+  - ![image-20210611141414730](images/image-20210611141414730.png)
+
+- 窗口长度：表示窗口要处理的数据范围；
+- 滑动距离：表示隔多久开一个窗口；
+- 窗口类型：
+  - **滑动窗口**： 窗口长度 > 滑动距离；数据重复
+  - **滚动窗口**： 窗口长度 = 滑动距离；正正好好的窗口
+  - 会丢失数据窗口(开发不用): 窗口长度 < 滑动间隔 
+
+## 6-8 在微批时间跟窗口时间一致时，可以使用reduceByKey么？ 
+
+可以；
+
+窗口时间必须是微批时间的整数倍，如果做窗口计算使用**reduceByKeyAndWindow**算子，但是当窗口时间 = 微批时间的时候，就相当于没有做窗口计算了。
+
+
+
+## 6-9 map ，mapPartition,transform 区别是什么？
+
+- 处理对象不一样：
+  - **map: 一条条数据；**
+  - **mapPartition:分区；**
+  - **transform：RDD；**
+- **DStream 里面是RDD；   RDD 里面是分区；  分区里面是一条条数据；**
+
+- DStream 如果加了窗口，里面就只有一个RDD了；
+- 所以在对加了窗口的DStream做排序的时候使用transform,里面只有一个RDD ,对这个RDD 排序就是全局排序；
+
+## 6-10 foreach,foreachPartition,foreachRDD区别是什么？
+
+处理对象不一样：
+
+- **foreach: 一条条数据；**
+- **foreachPartition:分区；**
+- **foreachRDD ： RDD**
+
+总结：
+
+- map 						处理每一条数据 并返回；
+- foreach                    处理每一条数据 无返回；
+- mapPartition          处理每个分区数据 并返回；
+- foreachPartition     处理每个分区数据 无返回；
+- transform                处理DStream中的每个RDD  并返回；
+- foreachRDD             处理DStream中的每个RDD  无返回；
+- **注意还有一个foreachBatch： 是StructuredStreaming 中的算子，处理流中一个批次的数据；**
+
+
+
+## 6-11 SparkStreamging 整合kafka
+
+- 两种模式
+  - Receiver：接收器模式；
+    - 优点：
+      - 使用的是**高级API**;
+    - 缺点：
+      - 只有一个Receiver 去接收数据，**性能不高**并且一旦Receiver挂了，整个系统崩溃（可靠性差）；
+      - 为了不丢失数据有个WAL预写日志功能，但是又会出现**重复消费**的问题；
+      - 如果采用多个Receiver,又需要使用**union**操作后才发给DStream;性能再次拉低；
+  - Direct : 直连模式；
+    - 优点：
+      - kafka 与 Streaming之间是**分区对分区的模式，性能非常高，也是分布式的并行计算模式**；
+      - **不存在数据丢失**，要处理什么就拉取什么数据即可；
+      - **自己管理offset** .
+    - 缺点：
+      - 使用的**低等级API;**
+
+- 三种管理offset 模式
+  - **自动提交offset** 
+    - auto.commit.interval.ms -> "1000" // 自动提交offset时间间隔;
+    - enable.auto.commit -> (true:lang.Boolean) // 是否自动提交offset;
+  - **手动提交offset**
+    - enable.auto.commit -> (false:lang.Boolean) // 是否自动提交offset;
+    - CanCommitOffset  // 记录了一些列可以提交的数据；
+    - 通过方法commitAsync提交；
+- <img src="images/image-20210611165147399.png" alt="image-20210611165147399" style="zoom:150%;" />
+

@@ -77,13 +77,130 @@
 
 ### 1-2-1 模块介绍
 
+​		Structured Streaming 在 Spark 2.0 版本于 **2016 年引入**，设计思想参考很多其他系统的思想，比如区分 processing time 和 event time，使用 relational 
+
+执行引擎提高性能等。同时也考虑了和 Spark 其他组件更好的集成。
+
+![img](images/wps6-1623641102748.jpg) 
+
+Structured Streaming 和其他系统的显著区别主要如下：
+
+- **Incremental query model（增量查询模型）**
+  - Structured Streaming 将会在新增的流式数据上不断执行增量查询，同时代码的写法和批处理 API（基于Dataframe和Dataset API）完全一样，而且这些API非常的简单。
+
+- **Support for end-to-end application（支持端到端应用）**
+  - Structured Streaming 和内置的 connector 使的 end-to-end 程序写起来非常的简单，而且 "correct by default"。数据源和sink满足 "exactly-once" 语义，这样我们就可以在此基础上更好地和外部系统集成。
+
+- **复用 Spark SQL 执行引擎**
+  - Spark SQL 执行引擎做了非常多的优化工作，比如执行计划优化、codegen、内存管理等。这也是Structured Streaming取得高性能和高吞吐的一个原因。
+
 
 
 ### 1-2-2 核心设计
 
+**- Source   			输入源**
+
+**- Transform  	 数据处理**
+
+**- Sink    			   数据输出**
+
+
+
+2016年，Spark在2.0版本中推出了**结构化流处理的模块Structured Streaming**，核心设计如下：
+
+#### 1-2-2-1 Input and Output（输入和输出）
+
+- Structured Streaming 内置了很多 connector 来保证 input 数据源和 output sink 保证 exactly-once 语义。
+
+- 实现 exactly-once 语义的前提：
+  - Input 数据源必须是可以replay的，比如Kafka，这样节点crash的时候就可以重新读取input数据，常见的数据源包括 Amazon Kinesis, Apache Kafka 和文件系统。
+  - Output sink 必须要支持写入是**幂等**的，这个很好理解，如果 output 不支持幂等写入，那么一致性语义就是 at-least-once 了。另外对于某些 sink, Structured Streaming 还提供了原子写入来保证 exactly-once 语义。
+  - 补充：**幂等性**：在HTTP/1.1中对幂等性的定义：**一次和多次请求某一个资源对于资源本身应该具有同样的结果**（网络超时等问题除外）。也就是说，其任意多次执行对资源本身所产生的影响均与一次执行的影响相同。**幂等性**是系统服务对外一种承诺（而不是实现），承诺只要调用接口成功，外部多次调用对系统的影响是一致的。声明为幂等的服务会认为外部调用失败是常态，并且失败之后必然会有重试。
+
+#### 1-2-2-2 Program API（编程 API）
+
+- Structured Streaming 代码编写完全复用 Spark SQL 的 batch API，也就是对一个或者多个 stream 或者 table 进行 query。
+
+![img](images/wps5-1623638849705.jpg) 
+
+- query 的结果是 result table，可以以多种不同的模式（追加：append, 更新：update, 完全：complete）输出到外部存储中。
+
+- 另外，Structured Streaming 还提供了一些 Streaming 处理特有的 API：Trigger, watermark, stateful operator。
+
+#### 1-2-2-3 Execution Engine（执行引擎）
+
+- 复用 **Spark SQL 的执行引擎**；
+
+- Structured Streaming 默认使用类似 Spark Streaming 的 **micro-batch** 模式，有很多好处，比如动态负载均衡、再扩展、错误恢复以及 straggler （straggler 指的是哪些执行明显慢于其他 task 的 task）重试；
+
+- 提供了基于传统的 long-running operator 的 **continuous（持续） 处理模式**；
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**提供了自动的微批间隔**</span>(不需要设置,spark会尽快完成批次提交计算)
+
+#### 1-2-2-4 Operational Features（操作特性）
+
+- 利用<span style="color:red;background:white;font-size:20px;font-family:楷体;">**wal（HLog 预写日志）和状态State存储**</span>，开发者可以做到集中形式的 rollback 和错误恢复FailOver。
+
+
+
 
 
 ### 1-2-3 编程模型 - 重点
+
+#### 1-2-3-1 数据结构
+
+​		Structured Streaming**将流式数据当成一个不断增长的table**，然后使用和批处理同一套API，都是基于DataSet/DataFrame的。如下图所示，通过将流式数据理解成一张不断增长的表，从而就可以像操作批的静态数据一样来操作流数据了。
+
+![img](images/wps1-1623638576192.jpg) 
+
+在这个模型中，主要存在下面几个组成部分：
+
+
+
+- 1：**Input Table（Unbounded Table）**，流式数据的抽象表示，没有限制边界的，表的数据源源不断增加；
+- 2：Query（查询），对 Input Table 的增量式查询，只要Input Table中有数据，立即（默认情况）执行查询分析操作，然后进行输出（类似SparkStreaming中微批处理）；
+- 3：Result Table，Query 产生的结果表；
+- 4：Output，Result Table 的输出，依据设置的输出模式OutputMode输出结果；
+
+![img](images/wps2-1623638576193.jpg) 
+
+
+
+
+
+#### 1-2-3-2 核心思想
+
+​		**Structured Streaming最核心的思想就是将实时到达的数据看作是一个不断追加的unbound table无界表**，到达流的每个数据项就像是表中的一个新行被附加到无边界的表中，**用静态结构化数据的批处理查询方式进行流计算。**
+
+![img](images/wps3-1623638576193.jpg) 
+
+
+
+以词频统计WordCount案例，Structured Streaming实时处理数据的示意图如下，各行含义：
+
+- 第一行、表示从TCP Socket不断接收数据，使用【**nc -lk 9999**】；
+
+- 第二行、表示时间轴，每隔1秒进行一次数据处理；
+
+- 第三行、可以看成是“input unbound table"，当有新数据到达时追加到表中；
+
+- 第四行、最终的wordCounts是结果表，新数据到达后触发查询Query，输出的结果；
+
+- 第五行、当有新的数据到达时，Spark会执行“增量"查询，并更新结果集；该示例设置为Complete Mode，因此每次都将所有数据输出到控制台；
+
+![img](images/wps4-1623638576193.jpg) 
+
+上图中数据实时处理说明：
+
+- 第一、在第1秒时，此时到达的数据为"cat dog"和"dog dog"，因此可以得到第1秒时的结果集cat=1 dog=3，并输出到控制台；
+
+- 第二、当第2秒时，到达的数据为"owl cat"，此时"unbound table"增加了一行数据"owl cat"，执行word count查询并更新结果集，可得第2秒时的结果集为cat=2 dog=3 owl=1，并输出到控制台；
+
+- 第三、当第3秒时，到达的数据为"dog"和"owl"，此时"unbound table"增加两行数据"dog"和"owl"，执行word count查询并更新结果集，可得第3秒时的结果集为cat=2 dog=4 owl=2；
+
+ 
+
+​		<span style="color:red;background:white;font-size:20px;font-family:楷体;">**使用Structured Streaming处理实时数据时，会负责将新到达的数据与历史数据进行整合，并完成正确的计算操作，同时更新Result Table。**</span>
 
 
 
@@ -684,7 +801,7 @@ df.writeStream
   - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**查询名称 就是 二次查询（子查询）**</span>；
   - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**设置的查询名称就是二次查询的表名**</span>设置的查询名称就是二次查询的表名；
   - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**设置查询名称的时候OuputMode 必须是memory**</span>；
-  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**二次查询输入批处理（不是流处理**</span>;
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**二次查询输入批处理（不是流处理）**</span>;
 
 
 
@@ -2186,7 +2303,324 @@ object Demo12_Watermark {
 
 
 
+# 8- Streaming Deduplication（去重）
+
+## 8-1  **介绍**
+
+在实时流式应用中，最典型的应用场景：网站UV统计。
+
+1:实时统计网站UV，比如每日网站UV；
+
+2:统计最近一段时间（比如一个小时）网站UV，可以设置水位Watermark；
+
+ 
+
+- Structured Streaming可以使用<span style="color:red;background:white;font-size:20px;font-family:楷体;">**deduplication对有无Watermark的流式数据进行去重操作**</span>:
+  - 1.**无 Watermark**：对重复记录到达的时间没有限制。查询会保留所有的过去记录作为状态用于去重；
+  - **2.有 Watermark**：对重复记录到达的时间有限制。查询会根据水印删除旧的状态数据；
+
+ 
+
+官方提供示例代码如下：
+
+![img](images/wps7-1623660708018.jpg) 
+
+## 8-2  **需求**
+
+对网站用户日志数据，按照userId和eventType去重统计
+
+数据如下：
+
+``` json
+{"eventTime": "2016-01-10 10:01:50","eventType": "browse","userID":"1"}
+{"eventTime": "2016-01-10 10:01:50","eventType": "click","userID":"1"}
+{"eventTime": "2016-01-10 10:01:55","eventType": "browse","userID":"1"}
+{"eventTime": "2016-01-10 10:01:55","eventType": "click","userID":"1"}
+{"eventTime": "2016-01-10 10:01:50","eventType": "browse","userID":"1"}
+{"eventTime": "2016-01-10 10:01:50","eventType": "click","userID":"1"}
+{"eventTime": "2016-01-10 10:02:00","eventType": "click","userID":"1"}
+{"eventTime": "2016-01-10 10:01:50","eventType": "browse","userID":"1"}
+{"eventTime": "2016-01-10 10:01:50","eventType": "click","userID":"1"}
+{"eventTime": "2016-01-10 10:01:51","eventType": "click","userID":"1"}
+{"eventTime": "2016-01-10 10:01:50","eventType": "browse","userID":"1"}
+{"eventTime": "2016-01-10 10:01:50","eventType": "click","userID":"3"}
+{"eventTime": "2016-01-10 10:01:51","eventType": "click","userID":"2"}
+```
 
 
-# 8- Streaming Deduplication
 
+ 
+
+## 8-3  **代码演示**
+
+``` scala
+package cn.itcast.structedstreaming
+
+import org.apache.commons.lang3.StringUtils
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
+object StructuredDeduplication {
+  def main(args: Array[String]): Unit = {
+    // 1. 构建SparkSession会话实例对象，设置属性信息
+    val spark: SparkSession = SparkSession.builder()
+      .appName(this.getClass.getSimpleName.stripSuffix("$"))
+      .master("local[*]")
+      .config("spark.sql.shuffle.partitions", "3")
+      .getOrCreate()
+    val sc: SparkContext = spark.sparkContext
+    sc.setLogLevel("WARN")
+    import org.apache.spark.sql.functions._
+    import spark.implicits._
+
+    // 1. 从TCP Socket 读取数据
+    val inputTable: DataFrame = spark.readStream
+      .format("socket")
+      .option("host", "node1")
+      .option("port", 9999)
+      .load()
+
+    // 2. 数据处理分析
+    val resultTable: DataFrame = inputTable
+      .as[String]
+      .filter(StringUtils.isNotBlank(_))
+      // 样本数据：{“eventTime”: “2016-01-10 10:01:50”,“eventType”: “browse”,“userID”:“1”}
+      .select(
+        get_json_object($"value", "$.eventTime").as("event_time"),
+        get_json_object($"value", "$.eventType").as("event_type"),
+        get_json_object($"value", "$.userID").as("user_id")
+      )
+      // 按照UserId和EventType去重
+      .dropDuplicates("user_id", "event_type")
+      .groupBy($"user_id", $"event_type")
+      .count()
+
+    // 3. 设置Streaming应用输出及启动
+    val query: StreamingQuery = resultTable.writeStream
+      .outputMode(OutputMode.Complete())
+      .format("console")
+      .option("numRows", "10")
+      .option("truncate", "false")
+      .start()
+    query.awaitTermination()
+    query.stop()
+  }
+}
+```
+
+
+
+ 
+
+运行应用结果如下：
+
+![img](images/wps8-1623660708019.jpg)
+
+
+
+# 9- 面试题
+
+## 9-1 对比SparkSteaming 与StructuredStreaming 
+
+- **SparkStreaming 的不足，Struectured Streaming 优点；**
+
+  - **使用 Processing Time 而不是 Event Time(很重要,真实场景都会用这个）**
+  - **使用的API是低等级的API，比较复杂；**
+  - **不支持end-to-end，端到端精确一致性；**
+  - **批流代码不统一；**
+  - **默认是无状态计算；** （StructuredStreaming 默认是有状态计算）
+
+- **Structured Streaming 比 SparkStreaming 强大原因？**
+
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**API和SparkSQL基本一致；**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**基于无界DF,完成了自动状态管理；**</span>
+  - 默认是有状态计算；
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**数据源和数据输出是Spark内置的，可以确保容错（一致性）；**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**支持事件时间；**</span>(非常重要)
+
+  
+
+## 9-2 Spark 编程三大模块?
+
+- Source 输入源；
+- Transform 数据处理； 
+- Sink 数据输出；
+
+
+
+## 9-3 数据抽象-数据结构总结
+
+### 9-3-1 RDD
+
+- **弹性分布式数据集；**
+- **是SparkCore中的数据结构；**
+- 类似于List 集合，但是是分布式的；
+
+### 9-3-2 DataFrame
+
+- **是SparkSQL中的数据结构；**SparkSQL 1.3 版本
+- **DataFrame 不支持泛型；**
+- **RDD转DataFrame  会丢失泛型；**
+- **DataFrame反转成RDD,也没有泛型；**
+- DataFrame 中每一行数据叫做**Row对象**；所以DataFrame->RDD 变成RDD[Row]
+
+
+
+### 3-9-3 DataSet 
+
+- **SparkSQL1.6 版本中的数据结构**；
+- **DataSet支持泛型；** ： DataSet[Person]
+- DataSet[Person] 可以**直接反转成RDD**[Person]
+- **SparkSQL2.0 版本中的数据结构是DataSet;**
+  - **DataFrame 实际类已经不存在了；**
+  - **DataFrame = DataSet[Row]** ; （就是DataSet[Row] 的**别名** DataFrame）
+
+### 3-9-4 DStream
+
+- **是SparkStreaming 中的数据结构；**
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**DStream：在时间线上的一组RDD集合;**</span>
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**DStream：是不间断的 连续的数据对象(内容是无边界的);**</span>
+
+### 3-9-5 unBoundDataFrame
+
+- **是Stuctured Streaming 中的数据结构；**
+- 就是一个**无边界**的DataFrame;
+
+
+
+## 9-4 Structured Streaming 支持哪些数据源?
+
+- FileSource;
+- SocketSource;
+
+- RateSource;
+- KafkaSource;
+
+![image-20210420191538113](images/image-20210420191538113.png)
+
+
+
+## 9-5 常用的隐式转换有哪些？
+
+- import spark.implicits._   
+  - toDF;
+  - toDS;
+- import org.apache.spark.sql.functions._
+  - udf();
+  - agg();
+  - count();
+  - $
+
+
+
+## 9-6 介绍一下OutputMode 输出模式？
+
+- append;
+
+  - 默认的模式；
+  - **只会输出新增的数据**；（更新的也不会输出）
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**不支持聚合操作；**</span>
+
+- complete;
+
+  - 输出全部数据； 
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**只支持带有聚合的操作；**</span> 
+
+- update;
+
+  - 新数据 + 更新数据；
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**不支持排序；**</span>
+
+  
+
+## 9-7 Structured Streaming 如何保证精确一致性 ？
+
+- **检查点checkpoint;**
+- **WAL;**
+- **offset;**
+
+## 9-8 SparkStreaming 与 Stuctured Streaming 微批时间区别？
+
+- **SparkStreaming** 
+  - **在获取StreamingContext的时候设置；**
+  - **必须设置；**
+- **Stuctured Streaming**
+  - **默认不设置（全自动模式）：Spark 会尽快的处理数据；**
+  - **使用trigger算子设置微批间隔时间；**
+
+
+
+## 9-8 介绍一下查询名称？
+
+理解
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**查询名称 就是 二次查询（子查询）**</span>；
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**设置的查询名称就是二次查询的表名**</span>设置的查询名称就是二次查询的表名；
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**设置查询名称的时候OuputMode 必须是memory**</span>； （重点）
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**二次查询输入批处理（不是流处理）**</span>;
+
+
+
+## 9-9 介绍一下检查点位置 checkpointLocation
+
+- 使用<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Checkpoint 检查点进行故障恢复；一个容错的机制**</span>
+
+- 使用Checkpoint和预写日志WAL完成 状态恢复（故障恢复）；
+- Checkpoint 里面保存了？
+  - 检查点状态state;
+  - 预写日志；
+    - offsets;
+    - commits;
+
+- 两种方式设置Checkpoint Location位置：
+  - **1. DataStreamWrite设置**
+    - streamDF.writeStream.option("checkpointLocation", "path")
+  - **2. SparkConf设置**
+    - sparkConf.set("spark.sql.streaming.checkpointLocation", "path")
+- 注意：
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**Socket 源是不支持容错的，所以无法使用检查点实现状态恢复；**</span>
+
+
+
+## 9-10 介绍一下StructuredStreaming 中Sink？
+
+![image-20210614162436151](images/image-20210614162436151.png)
+
+
+
+## 9-11 介绍一下StructuredStreaming 去重
+
+Structured Streaming可以使用<span style="color:red;background:white;font-size:20px;font-family:楷体;">**deduplication对 有无 Watermark的流式数据进行去重操作**</span>:
+
+- **1.无 Watermark：**
+  - 对重复记录**到达的时间没有限制**。
+  - 查询会**保留所有的过去记录**作为状态用于去重；
+- **2.有 Watermark**：
+  - 对重复记录**到达的时间有限制**。
+  - 查询会根据**水印删除旧的状态**数据；
+
+## 9-12 StructuredStreaming 整合kafka需要注意些什么？ 
+
+- 所有的kafka配置都是通过**option来配置**的；
+
+- 可以消费**多个Topic**中的数据； 
+
+- 可以使用**通配符匹配Topic**数据；
+
+- **kafka获取数据后Schema字段信息如下：**
+
+  - **数据信息：**
+    - **key** 
+    - **value**
+  - **元数据：**
+    - **topic**
+    - **partition**
+    - **offset**
+
+- 获取到的数据信息都是**二进制数据 binary类型**；
+
+  - **df.selectExpr("CAST(key AS STRING)","CAST(value AS STRING)").as[(String,String)]**
+
+  ![image-20210614180119387](images/image-20210614180119387.png)

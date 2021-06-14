@@ -5,17 +5,14 @@
 
 
 
-
-
-
-
 # 如何创建Archive
 
 ``` sql
 Usage: hadoop archive -archiveName name -p <parent> <src>* <dest>
 ```
 
-​		其中-archiveName是指要创建的存档的名称。比如test.har，archive的名字的扩展名应该是*.har。 -p参数指定文件存档文件（src）的相对路径。
+- -archiveName是指要**创建的存档的名称**。比如test.har，archive的名字的扩展名应该是*.har。
+- -p参数**指定文件存档文件**（src）的相对路径。
 
 ​		例如：如果你只想存档一个目录/config下的所有文件:
 
@@ -37,7 +34,7 @@ hadoop archive -archiveName test.har -p /config /outputdir
 hadoop fs -ls /outputdir/test.har
 ```
 
-​		这里可以看到har文件包括：两个索引文件，多个part文件（本例只有一个）以及一个标识成功与否的文件。<span style="color:red;background:white;font-size:20px;font-family:楷体;">**part文件是多个原文件的集合**</span>，根据index文件去找到原文件。
+​		这里可以看到har文件包括：两个**索引文件**，多个**part文件**（本例只有一个）以及一个标识成功与否的文件。<span style="color:red;background:white;font-size:20px;font-family:楷体;">**part文件是多个原文件的集合**</span>，根据index文件去找到原文件。
 ​		例如上述的/input目录下有很多小的xml文件。进行archive操作之后，这些小文件就归档到test.har里的part-0一个文件里。
 
 ``` sql
@@ -100,10 +97,12 @@ hadoop fs -cp har:///outputdir/test.har/*    /config2
 
 ## Archive注意事项
 
-1. Hadoop archives是特殊的档案格式。一个Hadoop archive对应一个文件系统目录。Hadoop archive的扩展名是*.har；
-2. 创建archives本质是运行一个Map/Reduce任务，所以应该在Hadoop集群上运行创建档案的命令，要提前启动Yarn集群； 
+1. Hadoop archives是特殊的档案格式。
+   1. 一个Hadoop archive对应一个文件系统目录。
+   2. Hadoop archive的扩展名是*.har；
+2. 创建archives**本质是运行一个Map/Reduce任务**，所以应该在Hadoop集群上运行创建档案的命令，要提前启动Yarn集群； 
 3. 创建archive文件要消耗和原文件一样多的硬盘空间；
-4. archive文件不支持压缩，尽管archive文件看起来像已经被压缩过；
+4. archive文件**不支持压缩**，尽管archive文件看起来像已经被压缩过；
 5. archive文件一旦创建就无法改变，要修改的话，需要创建新的archive文件。事实上，一般不会再对存档后的文件进行修改，因为它们是定期存档的，比如每周或每日；
 6. 当创建archive时，源文件不会被更改或删除；
 
@@ -111,7 +110,7 @@ hadoop fs -cp har:///outputdir/test.har/*    /config2
 
 # Snapshot快照的使用
 
-​		快照顾名思义，就是相当于对hdfs文件系统做一个备份，可以通过快照对指定的文件夹设置备份，但是添加快照之后，并不会立即复制所有文件，而是指向同一个文件。当写入发生时，才会产生新文件。
+​		快照顾名思义，就是相当于对hdfs文件系统做一个备份，可以通过快照对指定的文件夹设置备份，**但是添加快照之后，并不会立即复制所有文件，而是指向同一个文件。当写入发生时，才会产生新文件**。
 HDFS 快照（HDFS Snapshots）是文件系统在某个时间点的只读副本。可以在文件系统的子树或整个文件系统上创建快照。快照的常见用途主要包括数据备份，防止用户误操作和容灾恢复。
 
 

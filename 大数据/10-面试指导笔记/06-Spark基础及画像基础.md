@@ -30,7 +30,7 @@
 
 * ShuffleWriter分为几类？
 
-* ![image-20210515115919742](06-Spark基础及画像基础.assets/image-20210515115919742.png)
+* <img src="06-Spark基础及画像基础.assets/image-20210515115919742.png" alt="image-20210515115919742" style="zoom:150%;" />
 
 * 作业：根据视频学习Shuffle的源码讲解及Spark源码讲解--在面试中可以讲解
 
@@ -258,7 +258,8 @@
   双value：union，zip，distinct
   key-value类型：reduceBykey(一定不属于Action算子)，foldByKey
   （11）RDD创建的三种方法？sc.textfile,sc.makerdd/paralleise,RDD之间的转换
-  6-SparkSQL：
+  
+* 6-SparkSQL：
   （1）RDD-DataSet和DataFrame的区别和联系？RDD+Scheme=DataFrame.as[]+泛型=DataSet.rdd=RDD，DataFrame是弱类型的数据类型，在运行时候数据类型检查，DataSet是强类型的数据类型，在编译时候进行类型检查
   （2）SparkSQL中查询一列的字段的方法有几种？df.select(['id']),df.select(col('id')),df.select(colomns('id')),df.select('id),df.select($"")
   （3）SparkSQL中的如何动态增加Schema?StructedType(StructedFileld(data,name,nullable)::Nil),new StructedType().add(data,name,nullable).add()
@@ -268,11 +269,14 @@
   （7）[非常重要]SparkSQL如何执行SQL的，SQL的查询引擎
   基于规则优化（Rule-based optimization, RBO----过滤下推，常量折叠）-逻辑执行计划中，进行逻辑计划优化
   基于代价优化（Cost-based optimization, CBO）----物理执行计划中选择最优物理执行计划
-  7-SparkStreaming
+  
+* 7-SparkStreaming
   （1）SparkStreaming几种编程模式？有状态(updateStateByKey\mapState)、无状态(reduceByKey)、窗口操作(windows，reduceByKeyANdWIndows)
   （2）对于DStream如何使用RDD的方法?(transform)
   （2）SparkStreaming的有状态的几种形式？updateStateByKey\mapState
   （3）SparkStreaming和Kafka的整合，如何获取Offset，010整合
+  
+  ``` scala
   KafkaUtils.createdirctstream(SSC,Kafka的parititon和Spark的eceutor是否在一个节点，Consumer.subscribe(Array(kafkatopic),params))
   获取Offset：StreamData.asInstanceOf[HasOffSetRanges].offsetRanges
   提交Offset：StreamData.asInstanceOf[CancommitOffSetRanges].async(offSetRanges)
@@ -285,7 +289,7 @@
     "auto.offset.reset" -> "latest",
     "enable.auto.commit" -> (false: java.lang.Boolean)
   )
-
+  
   val topics = Array("topicA", "topicB")
   val stream = KafkaUtils.createDirectStream[String, String](
     streamingContext,
@@ -298,6 +302,8 @@
     // some time later, after outputs have completed
     stream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
   }
+  ```
+  
   （4）SparkStreaming有两个时间？
   Spark Streaming接收器接收到的数据在存储到Spark中之前的时间间隔被分成数据块。 最低建议-50毫秒。
   一个时间是接收器接受数据的时间--默认是200ms，数据到来每隔200ms获取一次数据，合并数据形成DStream
@@ -357,11 +363,11 @@
   * Flink的流处理特性:Exactly-once/低延迟/分布式快照
   * Flink的状态存储：目前，Checkpoint持久化存储可以使用如下三种: 
    MemStateBackend
-   该持久化存储主要将快照数据保存到JobManager的内存中，仅适合作为测试以及快照的数据量非常小时使用，并不推荐用作大规模商业部署。
-   FsStateBackend
-   该持久化存储主要将快照数据保存到文件系统中，目前支持的文件系统主要是 HDFS和本地文件。
-   RocksDBStateBackend
-   RocksDBStatBackend介于本地文件和HDFS之间，平时使用RocksDB的功能，将数 据持久化到本地文件中，当制作快照时，将本地数据制作成快照，并持久化到 FsStateBackend中(FsStateBackend不必用户特别指明，只需在初始化时传入HDFS 或本地路径即可
+    该持久化存储主要将快照数据保存到JobManager的内存中，仅适合作为测试以及快照的数据量非常小时使用，并不推荐用作大规模商业部署。
+    FsStateBackend
+    该持久化存储主要将快照数据保存到文件系统中，目前支持的文件系统主要是 HDFS和本地文件。
+    RocksDBStateBackend
+    RocksDBStatBackend介于本地文件和HDFS之间，平时使用RocksDB的功能，将数 据持久化到本地文件中，当制作快照时，将本地数据制作成快照，并持久化到 FsStateBackend中(FsStateBackend不必用户特别指明，只需在初始化时传入HDFS 或本地路径即可
   * FLink on yarn提交方式：Session会话模式/job分离模式
   * FLink中的重启策略：默认/无重启/固定延迟/失败率....
   * Flink的四大基石的time的分类：EventTime事件时间，Ingestiontime摄入时间，ProcessingTime处理时间

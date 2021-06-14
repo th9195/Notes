@@ -72,7 +72,7 @@
 
 ### 1-2-3 通用性强
 
-​		在 Spark 的基础上，Spark 还提供了包括Spark SQL、Spark Streaming、MLib 及GraphX在内的多个工具库，我们可以在一个应用中无缝地使用这些工具库。其中，Spark SQL 提供了结构化的数据处理方式，Spark Streaming 主要针对流式处理任务（也是本书的重点），MLlib提供了很多有用的机器学习算法库，GraphX提供图形和图形并行化计算。
+​		在 Spark 的基础上，Spark 还提供了包括**Spark SQL、Spark Streaming、MLib 及GraphX**在内的多个工具库，我们可以在一个应用中无缝地使用这些工具库。其中，Spark SQL 提供了结构化的数据处理方式，Spark Streaming 主要针对流式处理任务（也是本书的重点），MLlib提供了很多有用的机器学习算法库，GraphX提供图形和图形并行化计算。
 
 ![img](images/wps9-1617069592283.jpg)
 
@@ -104,7 +104,7 @@
 
 ### 1-3-2 Spark SQL
 
-​		Spark 用来操作结构化数据的程序包。通过 Spark SQL，我们可以使用 SQL操作数据。<span style="color:red;background:white;font-size:20px;font-family:楷体;">**数据结构：Dataset/DataFrame = RDD + Schema**</span>
+​		Spark 用来操作**结构化数据**的程序包。通过 Spark SQL，我们可以使用 SQL操作数据。<span style="color:red;background:white;font-size:20px;font-family:楷体;">**数据结构：Dataset/DataFrame = RDD + Schema**</span>
 
 ![img](images/wps14-1617069774717.jpg) 
 
@@ -116,7 +116,7 @@
 
 ### 1-3-3 Spark Streaming
 
-​		Spark 提供的对实时数据进行流式计算的组件。提供了用来操作数据流的 API。 <span style="color:red;background:white;font-size:20px;font-family:楷体;">**数据结构：DStream = Seq[RDD]**</span>
+​		Spark 提供的对**实时数据**进行**流式计算**的组件。提供了用来操作数据流的 API。 <span style="color:red;background:white;font-size:20px;font-family:楷体;">**数据结构：DStream = Seq[RDD]**</span>
 
 ![img](images/wps15-1617069848018.jpg) 
 
@@ -148,7 +148,7 @@ Spark中用于图计算的API，性能良好，拥有丰富的功能和运算符
 
 ### 1-3-6 Structured Streaming
 
-​		Structured Streaming结构化流处理模块针对，流式结构化数据封装到DataFrame中进行分析。
+​		Structured Streaming**结构化流处理模块**针对，流式结构化数据封装到DataFrame中进行分析。
 
 ![img](images/wps18-1617069890554.jpg) 
 
@@ -968,8 +968,7 @@ scp -r spark-env.sh root@node3:$PWD
   - 在【$HADOOP_HOME/etc/hadoop/yarn-site.xml】配置文件中，指定MRHistoryServer地址信息，添加如下内容，在node1上修改
   - cd /export/server/hadoop/etc/hadoop
   - vim /export/server/hadoop/etc/hadoop/yarn-site.xml
-    
-
+  
 - 添加内容
 
 ``` xml
@@ -1419,7 +1418,31 @@ Client模式和Cluster模式最最本质的区别是：<span style="color:red;ba
 
 
 
-## 5-7 Spark 集群角色
+## 5-7 Spark 集群角色（重点）
+
+**四个角色Master Worker Driver Executor**
+
+- Local模式
+  - **一个JVM进程中通过线程模拟整个Spark的运行环境；**
+  - JVM 进程能拿到多少资源，就是整个Spark能使用的资源；
+  - Local模式下，使用**Driver线程 、Executor线程**来维持集群环境；
+
+- StandAlone模式
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**注意： 只有在standalone模式下， 才有master worker  这两个角色**</span>
+  - master :  **任务调度 、分配 + 资源调度、分配 + worker管理** ；
+  - worker : 计算；
+  - **master(管理资源、任务) + worker(计算)**
+
+- Yarn 模式
+  - **资源管理和分配，无需spark操心，由Yarn集群管理；**
+  - **spark只负责计算饥渴；**
+  - **Yarn(资源管理) + Spark(计算)**
+  - **Driver进程：任务管理、调度**
+  - **Executor进程：计算；**
+  - **client 模式：Driver是独立的进程；**
+  - **cluster 模式：Driver 和 Appmaster 在一起；**
+
+
 
 
 
@@ -1433,11 +1456,11 @@ Client模式和Cluster模式最最本质的区别是：<span style="color:red;ba
 
   
 
-- 2）、Master(ResourceManager)：是一个JVM Process 进程，主要负责资源的调度和分配，并进行集群的监控等职责；
+- 2）、Master(ResourceManager)：是一个JVM Process 进程，主要负责 **资源调度和分配，任务调度和分配，worker 管理**；并进行集群的监控等职责 (<span style="color:red;background:white;font-size:20px;font-family:楷体;">**注意： 只有在standalone模式下， 才有master worker  这两个角色**</span>)；
 
   
 
-- 3）、Worker(NodeManager)：是一个JVM Process 进程，一个Worker运行在集群中的一台服务器上，主要负责两个职责，一个是用自己的内存存储RDD的某个或某些partition；另一个是启动其他进程和线程（Executor），对RDD上的partition进行并行的处理和计算。
+- 3）、Worker(NodeManager)：（**纯干活，负责计算**）是一个JVM Process 进程，一个Worker运行在集群中的一台服务器上，主要负责两个职责，一个是用自己的内存存储RDD的某个或某些partition；另一个是启动其他进程和线程（Executor），对RDD上的partition进行并行的处理和计算 (<span style="color:red;background:white;font-size:20px;font-family:楷体;">**注意： 只有在standalone模式下， 才有master worker  这两个角色**</span>)。
 
   
 
@@ -2170,7 +2193,7 @@ public class WordCountJava8 {
 
 
 
-将结果数据resultRDD调用saveAsTextFile方法，保存数据到外部存储系统中，代码在Executor中执行的。但是如果resultRDD调用take、collect或count方法时，获取到最终结果数据返回给Driver，代码如下：
+将结果数据**resultRDD调用saveAsTextFile方法，保存数据到外部存储系统中，代码在Executor中执行的**。但是如果**resultRDD调用take、collect或count方法时，获取到最终结果数据返回给Driver**，代码如下：
 
 ![img](images/wps33-1617098280546.jpg) 
 
@@ -2182,15 +2205,11 @@ public class WordCountJava8 {
 
 - 综上所述Spark Application中Job执行有两个主要点：
   - 1）、RDD输出函数分类两类
-    - 第一类：返回值给Driver Progam，比如count、first、take、collect等
-    - 第二类：没有返回值，比如直接打印结果、保存至外部存储系统（HDFS文件）等
+    - 第一类：**返回值给Driver Progam，比如count、first、take、collect等**
+    - 第二类：**没有返回值，比如直接打印结果、保存至外部存储系统（HDFS文件）等**
   - 2）、在Job中从读取数据封装为RDD和一切RDD调用方法都是在Executor中执行，其他代码都是在Driver Program中执行
-    - SparkContext创建与关闭、其他变量创建等在Driver Program中执行
-    - RDD调用函数都是在Executors中执行
-
-
-
-
+    - **SparkContext创建与关闭、其他变量创建等在Driver Program中执行**
+    - **RDD调用函数都是在Executors中执行**
 
 
 

@@ -394,6 +394,12 @@ Row.fromSeq(Seq(value1, value2, ...))
 
 
 
+![image-20210608103222471](images/image-20210608103222471.png)
+
+![image-20210608103306251](images/image-20210608103306251.png)
+
+
+
 ![image-20210414145101854](images/image-20210414145101854.png)
 
  SparkSQL中常见面试题：如何理解Spark中三种数据结构RDD、DataFrame和Dataset关系？
@@ -2407,12 +2413,30 @@ object Demo13_SparkThriftServerJDBC {
 
 # 9- Spark On Hive 总结
 
+## 9-0 架构
+
+### 9-0-1 原Hive
+
+![image-20210608152839873](images/image-20210608152839873.png)
+
+### 9-0-2 Hive on Spark(淘汰的Shark)
+
+![image-20210608153117790](images/image-20210608153117790.png)
+
+### 9-0-3 Spark on Hive
+
+- **什么都是Spark的， 只有元数据管理用的Hive的MetaStore;**
+
+![image-20210608153431960](images/image-20210608153431960.png)
+
+
+
 ## 9-1 配置
 
+### 9-1-1 copy hive-site.xml配置文件；
+
 - 编写配置文件**hive-site.xml**，并放于node1的【**$SPARK_HOME/conf**】目录
-
-
-目的： 让Spark指定hive的元数据信息；
+  - 目的： 让Spark指定hive的元数据信息；
 
 cd /export/server/spark2.4.5/conf/
 
@@ -2451,7 +2475,13 @@ scp -r hive-site.xml root@node2:$PWD
 scp -r hive-site.xml root@node3:$PWD
 ```
 
+### 9-1-2 copy MySql驱动jar包
 
+- 将Mysql驱动jar包copy到spark 的jars目录下；
+
+### 9-1-3 启动Hive 的metaStore服务
+
+​	
 
 ## 9-2 启动服务
 
@@ -2565,3 +2595,255 @@ node1: /export/server/hadoop-2.7.5/sbin/stop-all.sh
 node1: /export/shell/start-zookeepers
 
 ```
+
+
+
+
+
+# 10- 面试题
+
+## 10-1  简单介绍一下SparkSQL
+
+- 一句话概括：**写的是SQL ，执行的是Spark**; 让Sql也有分布式执行的能力；
+
+- Spark 1.0版本才有Spark SQL 框架；
+
+- 数据结构： DataFrame(1.3版本) -> DataSet(1.6版本)->DataFrame=DataSet[Row] (2.0版本)；
+
+- 现使用的版本：2.4.5
+
+  
+
+## 10-2 介绍一下 SparkSQL 的特性
+
+- **易整合**
+  - 支持的语言多：java scala go python
+- **统一的数据访问**
+  - 连接到任何数据源的方式相同: **spark.read**.json/text/csv/parquet(一种序列化数据文件)....
+  - 写出时方式相同：**spark.write**.mode.text/json/csv/parquet
+- **兼容Hive**
+  - 支持Hive HQL的语法，兼容hive(元数据库、SQL语法、UDF、序列化、反序列化机制)。
+- **标准的数据连接**
+  - 可以使用行业标准的JDBC或ODBC连接。
+
+
+
+## 10-3 介绍一下SparkSQL 的数据抽象
+
+
+
+![image-20210608103505983](images/image-20210608103505983.png)
+
+
+
+- SparkCore 中的数据结构是RDD;
+  - **RDD 支持泛型 ：RDD[Person]**
+- SparkSQL 1.3 版本 中的数据结构是DataFrame （**二维表格**）；
+  - **DataFrame 不支持泛型；**
+  - **RDD转DataFrame  会丢失泛型；**
+  - **DataFrame反转成RDD,也没有泛型；**
+  - DataFrame 中每一行数据叫做**Row对象**；所以DataFrame->RDD 变成RDD[Row]
+
+- SparkSQL1.6 版本中的数据结构是DataSet;
+  - **DataSet支持泛型；** ： DataSet[Person]
+  - DataSet[Person] 可以**直接反转成RDD**[Person]
+- SparkSQL2.0 版本中的数据结构是DataSet;
+  - **DataFrame 实际类已经不存在了；**
+  - **DataFrame = DataSet[Row]** ; （就是DataSet[Row] 的**别名** DataFrame）
+
+
+
+## 10-4 RDD-DataFrame-DataSet相互转换
+
+- RDD
+  - rdd-->df ：**personRDD.toDF** //注意:DataFrame没有泛型； 注意：需要导包import spark.implicits._
+  - rdd-->ds：**personRDD.toDS()** //注意:Dataset具有泛型
+- DF
+  - df-->rdd : **personDF.rdd** 
+    - 注意:DataFrame没有泛型,也就是不知道里面是Person,所以转为rdd之后统一的使用Row表示里面是很多行
+  - df-->ds : **personDF.as[Person]**
+- DS
+  - ds-->rdd : **personDS.rdd**
+  - ds-->df：**personDS.toDF()**
+
+![image-20210414151836609](images/image-20210414151836609.png)
+
+
+
+## 10-5 SparkSQL 的执行环境入口是什么？
+
+- **SparkSession;**
+
+  ``` scala
+  val spark: SparkSession = SparkSession
+        .builder()
+        .appName("SparkSQL")
+        .master("local[*]")
+        .getOrCreate()
+  ```
+
+
+
+## 10-6 RDD-DataSet和DataFrame的区别和联系？
+
+- RDD+Scheme=DataFrame.as[]+泛型=DataSet.rdd=RDD；
+
+- DataFrame是**弱类型**的数据类型，在**运行时**候数据类型检查；
+
+- DataSet是**强类型**的数据类型，在**编译时**候进行类型检查；
+
+  
+
+## 10-7 SparkSQL中查询一列的字段的方法有几种？
+
+- df.select( **['id']** )；
+- df.select( **col('id')** )；
+- df.select( **colomns('id')** )；
+- df.select( **'id** )；#注意： **只有一个单引号**
+- df.select( **$"id"** )  : 常用；
+
+
+
+## 10-8 SparkSQL中的如何动态增加Schema?
+
+- **StructedType**(**StructedFileld**(data,name,nullable)::Nil)；
+- **new StructedType()**.add(data,name,nullable).add()
+
+
+
+## 10-9 SparkSQL中DSL和SQL风格差异？
+
+- DSL风格df.select；
+
+- SQL风格**需要注册一张临时表或试图**进行展示；
+
+
+
+## 10-10 SQL风格全局Session和局部的Session的差别是什么？
+
+- 全局的Session可以**跨Session**访问注册的临时试图或表；
+- 局部Session**只能访问临时试图或表**
+
+
+
+## 10-11 SparkSQL如何执行SQL转化成RDD?（重点）
+
+SQL的查询引擎
+
+- **使用Catalyst优化器 去做优化**
+  1. 基于**规则**优化（Rule-based optimization, **RBO**）-逻辑执行计划中，进行逻辑计划优化；
+     1. **列值裁剪**：选择需要查询的字段而不是 * ；
+     2. **谓词下推**：先filter 在join；
+  2. 基于**代价**优化（Cost-based optimization, **CBO**）---- 物理执行计划中 选择最优物理执行计划；
+     1. 多个物理计划 **使用代价函数优化 选择一个最优的物理计划**；
+- **最后使用代码生成器生成RDD;**
+
+![image-20200902154315486](images/image-20200902154315486.png)
+
+![image-20210515161022123](images/image-20210515161022123.png)
+
+![image-20210515162232828](images/image-20210515162232828.png)
+
+![image-20210518140834769](../10-面试指导笔记/images/image-20210518140834769.png)
+
+![image-20210518141216834](images/image-20210518141216834.png)
+
+
+
+## 10-12 SparkSQL整合Hive?
+
+- 原始Hive 架构
+
+![image-20210608155013241](images/image-20210608155013241.png)
+
+- **Spark on Hive 架构**
+  1. **计算引擎是Spark;**
+  2. **thrishift:10000 是SparkSQL；**
+  3. **beeLine也是SparkSql下的beeline;**
+  4. **JDBC就是普通的JDBC;**
+
+![image-20210608155118441](images/image-20210608155118441.png)
+
+![image-20210608153500176](images/image-20210608153500176.png)
+
+**Spark引擎替代HIve的执行引擎；**
+
+**SparkSQL 除了引用Hive的元数据信息之外，其它的Hive部分都没有耦合；**
+
+- 第一步：将hive-site.xml拷贝到Spark安装路径的conf目录下；
+
+  - 目的：**让Spark 知道Hive 中的元数据信息**
+
+- 第二步：将mysql的连接驱动包拷贝到spark的jars目录下；
+
+  - **Hive的元数据信息是存在mysql 中**，那么Spark也是需要去连接mysql的；
+
+- 第三步：Hive开启MetaStore服务；
+
+  
+
+- 第四步：**启动Spark 中的thirftServer 10000**
+
+
+
+## 10-13 IDEA  Spark整合Hive?
+
+- **将hive-site.xml 放在resources 目录下；**
+- **配置 warehouse的hive数据存储地址；**
+- **配置 metastore服务地址 thrift;**
+
+![image-20210608143607826](images/image-20210608143607826.png)
+
+
+
+## 10-14 介绍一下Spark 中的自定义UDF
+
+- **分类**：
+  - **UDF: 一进一出；**
+  - **UDAF: 多进一出；**
+  - **UDTF:一进多出；**
+
+- **功能：**
+
+  - **用于HiveSql 中没有的一些功能函数；**
+
+- 定义方式一：
+
+  ``` scala
+  val myfun = (word: String) => word.toUpperCase
+          
+  val lowCase2UpperCase1: UserDefinedFunction = udf(
+      // 这里是一个匿名函数， udf: 一进一出
+      // (word: String) => word.toUpperCase
+      myfun
+  )
+  ```
+
+- 定义方式二：
+
+  ``` scala
+  println("---------- 定义UDF 方式二 用于 DSL 和 SQL ----------")
+  val lowCase2UpperCase2 = spark.udf.register(
+      name = "lowCase2UpperCase2",
+      (word: String) => word.toUpperCase()
+  )
+  
+  ```
+
+- 使用方法：
+
+  ``` scala
+  // SQL 只能使用spark.udf.register的方式
+  spark.sql("select  lowCase2UpperCase2(word) as upWord from words").show()
+  
+  // DSL 两种注册方式都可以使用
+  df.select(lowCase2UpperCase1($"word").as("upWord")).show()
+  df.select(lowCase2UpperCase2($"word").as("upWord")).show()
+  ```
+
+  
+
+
+
+
+

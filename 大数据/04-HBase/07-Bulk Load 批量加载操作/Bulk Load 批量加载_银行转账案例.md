@@ -1,18 +1,30 @@
 
 
-# HBase的Bulk Load 批量加载操作
+# 1- HBase的Bulk Load 批量加载操作
+
+
+
+- 功能：
+  - **将原来已经存在的数据加载到Hbase中**；
+
+- 实现步骤：
+
+  - 第一个步骤: **将数据文件转换为HFile文件格式**   -- MapReduce	
+  - 第二个步骤: **将Hfile文件格式数据加载到Hbase中**
+
+  
 
 - 原有的数据写入操作大致流转流程: 
 
-``` tex
-正常写入数据的流程: 数据写入到Hlog --> memStore --> storeFile --> Hfile  
+``` properties
+正常写入数据的流程: 数据写入到Hlog --> memStore--> pipeLine --> storeFile --> Hfile  
 ```
 
 ​		如果以及有一批数据, 需要写入到Hbase中某个表中, 传统做法, 按照上述流程, 一步步将数据最终写入Hfile中, 此时整个region集群会经历大量的写入请求操作, hbase集群需要调度大量资源来满足本次的数据写入工作,如果这个时候, 又出现大量的读取数据请求也去访问这个表, 会发生什么问题呢? 读取性能有可能回受到影响 甚至出现卡顿现象
 
 - 思考如何解决
 
-``` sql
+``` properties
 hbase的Bulk Load 说明: 
 	对一批数据, 提前按照HBase的Hfile文件格式存储好, 然后将Hfile文件格式数据直接放置到Hbase对应数据目录下, 让Hbase直接加载, 此时不需要Hbase提供大量的写入资源, 即可完成全部数据写入操作
 	
@@ -25,7 +37,11 @@ hbase的Bulk Load 说明:
 
 
 
-## 需求说明
+# 2-案例- 银行转账案例
+
+
+
+## 2-1 需求说明
 
 * 需求: 需要将每一天的银行转账记录的数据 存储到HBase中 , 数据量比较的庞大
   * 数据所在位置: HDFS中, 
@@ -35,7 +51,7 @@ hbase的Bulk Load 说明:
 
 
 
-## 准备工作  
+## 2-2 准备工作  
 
 * 1) 在hbase中创建名称空间, 并创建hbase的表
 
@@ -151,7 +167,7 @@ hdfs dfs -put bank_record.csv /HBase/data/bank/input
 
 
 
-## 将CSV数据转换为HFile文件格式数据
+## 2-3 将CSV数据转换为HFile文件格式数据
 
 * map 程序的代码
 
@@ -302,19 +318,19 @@ public class JobMain {
 
 
 
-## 将Hfile文件格式数据加载HBase中
+## 2-4 将Hfile文件格式数据加载HBase中
 
 - 语法说明:
 
 
-```shell
+```properties
 hbase org.apache.hadoop.hbase.tool.LoadIncrementalHFiles  数据路径 Hbase表名
 ```
 
 - 案例
 
 
-```shell
+```properties
 hbase org.apache.hadoop.hbase.tool.LoadIncrementalHFiles  hdfs://node1:8020/HBase/datas/bank/output/  BANK:TRANSFER_RECORD
 ```
 
@@ -322,13 +338,13 @@ hbase org.apache.hadoop.hbase.tool.LoadIncrementalHFiles  hdfs://node1:8020/HBas
 
 导入时 发现报错了
 
-![image-20210119161040733](F:\博学谷\大数据\大数据进阶课程\赵佳乐\授课资料\day18_HBase\笔记\day18_课堂笔记.assets\image-20210119161040733.png)
+![image-20210119161040733](images/image-20210119161040733.png)
 
 此时可以通过查看当前执行对应regionServer的日志文件:
 
- tail -100f hbase-root-regionserver-node2.out
+ **tail -100f hbase-root-regionserver-node2.out**
 
-![image-20210119161358682](F:\博学谷\大数据\大数据进阶课程\赵佳乐\授课资料\day18_HBase\笔记\day18_课堂笔记.assets\image-20210119161358682.png)
+![image-20210119161358682](images/image-20210119161358682.png)
 
 错误原因: 是由于在安装软件过程中, 采用不同域名来操作, 导致Hbase无法识别  从而导致数据加载失败了
 
@@ -362,7 +378,7 @@ scp -r slaves node3:$PWD
 
 
 
-## 使用HBase查询数据
+## 2-5 使用HBase查询数据
 
 - 查询总数
 
@@ -374,7 +390,7 @@ scp -r slaves node3:$PWD
 
 
 
-## 使用Phoenix创建视图
+## 2-6 使用Phoenix创建视图
 
 ``` sql
 create view if not exists "BANK"."TRANSFER_RECORD"(
@@ -396,15 +412,25 @@ pk varchar primary key,
 
 
 
-## 查询前10行数据
+- 查询前10行数据
+  - 查询语句
 
-- 查询语句
+  ``` sql
+  select 
+  	rec_bank_name,
+  	pay_account,
+  	rec_account,
+  	pay_way,
+  	money 
+  from bank.transfer_record 
+  	limit 10 offset 0;
+  ```
 
-``` sql
-select rec_bank_name,pay_account,rec_account,pay_way,money from bank.transfer_record limit 10 offset 0;
-```
+  
 
-- 查询结果
+  
+
+  - 查询结果
 
 ``` tex
 +----------------+-------------------+-------------------+----------+----------+
