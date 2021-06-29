@@ -1,7 +1,3 @@
-
-
-
-
 [TOC]
 
 
@@ -96,8 +92,8 @@ https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/table/
 
 ### 1-4-4- DataStream->表  
 
-- createTemporaryView   (SQL 表)
-- fromDataStream  (Table对象)
+- [**createTemporaryView**]()   (SQL 表)
+- [**fromDataStream**]()  (Table对象)
 
 ![1615347773903](images/1615347773903.png)
 
@@ -107,8 +103,8 @@ https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/table/
 
 ### 1-4-5 表->DataStream
 
-- toAppendStream :  追加模式(只支持追加， 不支持更新和历史)；
-- toRetractStream：缩回模式（支持所有数据）；
+- [**toAppendStream**]() :  追加模式(只支持追加， 不支持更新和历史)；
+- [**toRetractStream**]()：缩回模式（支持所有数据）；
 
 ![1615359319714](images/1615359319714.png)
 
@@ -763,9 +759,9 @@ https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/table/connector
 
 
 
-- 原理
+- **原理**
 
-使用hive的元数据服务，使用Flink作为执行引擎；
+[**使用hive的元数据服务**]()，[**使用Flink作为执行引擎**]()；
 
 ![image-20210507095152224](images/image-20210507095152224.png)
 
@@ -954,19 +950,162 @@ public class FlinkSQLDemo05 {
 
 
 
+# 7- 面试题总结
+
+## 7-1 为什么很多计算框架都要支持SQL
+
+![1615346711686](images/1615346711686.png)
+
+## 7-2 Flink 1.9之后才实现流批统一（Blink）
+
+![1615347022858](images/1615347022858.png)
+
+## 7-3 DataStream 与 表互转
+
+- DataStream -> 表
+  - tenv.[createTemporaryView]()("tableA",orderA,**$("user"), $("product"), $("amount")**);   (SQL 表)
+  - tenv.**[fromDataStream]()**(orderB, **$("user"), $("product"), $("amount")**);  (Table对象)   用于DSL 模式
+
+- 表->DataStream
+  - tenv.[**toAppendStream**]()(resultTable, Order.class);:  追加模式([**只支持追加， 不支持更新**]())；
+  - tenv.[**toRetractStream**]()(resultTable, Order.class);：缩回模式（支持所有数据）；
+
+
+
+## 7-4 FlinkSQL核心思想
+
+- **动态表**和**连续查询**
+
+注意: FlinkSQL和Spark-StructuredStreaming的[**原理类似**](), 都支持使用[**SQL来处理批数据和流数据**]()
+
+但是注意: StructuredStreaming是**把流当做批**来处理, 而Flink是**把批当做流**来处理, 但是不管怎么,都有一个核心的模型,叫做**动态表**!  [**Unbounded Table**]()
+
+![1615348252694](images/1615348252694.png)
+
+![1615348286741](images/1615348286741.png)
 
 
 
 
 
+## 7-5 FlinkSQL 使用窗口
+
+- SQL 风格：[**TUMBLE(createTime, INTERVAL '5' SECOND)**]()
+
+  ``` sql
+  select 
+  	userId,
+  	count(userId) as orderCounts,
+  	max(money) as maxMoney,
+  	min(money) as minMoney 
+  from 
+  	t_order1 
+  group by 
+  	TUMBLE(createTime, INTERVAL '5' SECOND),  userId
+  ```
+
+  
+
+- Table/DSL风格
+
+  - DataStream 转成 Table时需要注意 ： [**在事件时间后加.rowtime()**]()
+
+  ``` java
+  tenv.createTemporaryView("t_order1",orderDSWithWatermark,$("orderId"), $("userId"), $("money"), $("createTime").rowtime());
+  ```
+
+  - Table风格 [**window(Tumble.over(lit(5).seconds()).on($("createTime")).as("myWindow"))**]()
+
+  ``` java
+  table.window(Tumble.over(lit(5).seconds()).on($("createTime")).as("myWindow"))
+                  .groupBy($("userId"), $("myWindow"))
+                  .select($("userId"),
+                          $("userId").count().as("totalCount"),
+                          $("money").max().as("maxMoney"),
+                          $("money").min().as("minMoney"));
+  ```
+
+  
+
+## 7-6 FlinkSql 整合Kafka
+
+- 从Kafka读数据
+
+``` java
+TableResult table1 = tenv.executeSql(
+    "CREATE TABLE table1 (\n" +
+    "  `user_id` BIGINT,\n" +
+    "  `page_id` BIGINT,\n" +
+    "  `status` STRING\n" +
+    ") WITH (\n" +
+    "  'connector' = 'kafka',\n" +
+    "  'topic' = 'topic1',\n" +
+    "  'properties.bootstrap.servers' = '192.168.88.161:9092',\n" +
+    "  'properties.group.id' = 'testGroup',\n" +
+    "  'scan.startup.mode' = 'latest-offset',\n" +
+    "  'format' = 'json'\n" +
+    ")"
+);
+```
 
 
 
+- 向Kafka写数据
+
+```java
+TableResult table2 = tenv.executeSql(
+    "CREATE TABLE table2 (\n" +
+    "  `user_id` BIGINT,\n" +
+    "  `page_id` BIGINT,\n" +
+    "  `status` STRING\n" +
+    ") WITH (\n" +
+    "  'connector' = 'kafka',\n" +
+    "  'topic' = 'topic2',\n" +
+    "  'properties.bootstrap.servers' = '192.168.88.161:9092',\n" +
+    "  'format' = 'json',\n" +
+    "  'sink.partitioner' = 'round-robin'\n" +
+    ")"
+);
+```
 
 
 
+## 7-7 Flink on Hive
+
+**[核心思想就是让Flink知道Hive的元数据信息]()**
+
+- 在/etc/profile配置,并分发,并source
+
+  - ``` shell
+    # Flink整合Hive
+    export HADOOP_CLASSPATH=`hadoop classpath`
+    ```
+
+- 下载jar包并上传到flink/lib目录
+
+cd /export/server/flink-1.12.0/lib/ 
+
+``` properties
+flink-connector-hive_2.12-1.12.0.jar
+hive-exec-2.1.0.jar
+```
+
+- 修改node3上 hive 配置文件
+
+vim /export/server/hive-2.1.0/conf/hive-site.xml
+
+```xml
+<property>
+    <name>hive.metastore.uris</name>
+    <value>thrift://node3:9083</value>
+</property>
+```
 
 
 
+- 在node3上启动hive 元数据服务
 
+``` properties
+nohup /export/server/hive-2.1.0/bin/hive --service metastore &
+```
 

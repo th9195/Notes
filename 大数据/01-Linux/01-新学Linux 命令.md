@@ -1,8 +1,4 @@
-## Linux 命令
-
-
-
-### find指令
+# find指令
 用于查找符合条件的文件
 示例：
 
@@ -13,7 +9,7 @@ find / -type f -size +100M #查找/目录下文件大小大于100M的文件
 
 
 
-### grep命令
+# grep命令
 ``` javascript
 grep 命令可以对文件进行文本查询
 grep lang anaconda-ks.cfg #在文件中查找lang
@@ -21,7 +17,7 @@ grep lang anaconda-ks.cfg #在文件中查找lang
 
 
 
-### 用户创建和密码设置
+# 用户创建和密码设置
 
 useradd 用户名
 passwd  用户名
@@ -35,7 +31,7 @@ passwd  itheima #设置用户itheima密码
 
 
 
-### 用户删除
+# 用户删除
 ``` javascript
 user -r 用户名
 userdel -r itheima #删除用户itheima
@@ -43,14 +39,14 @@ userdel -r itheima #删除用户itheima
 
 
 
-### 网络状态查看命令netstat
+# 网络状态查看命令netstat
 ``` javascript
 netstat -nltp
 ```
 
 
 
-### 查看某个端口挂在哪个进程上
+# 查看某个端口挂在哪个进程上
 
 ``` shell
 netstat -anp | grep 10000
@@ -58,7 +54,7 @@ netstat -anp | grep 10000
 
 
 
-### systemctl命令
+# systemctl命令
 
 ``` javascript
 systemctl start 服务名	开启服务
@@ -70,7 +66,7 @@ systemctl disable 服务名	关闭开机自启动
 
 
 
-### 网络操作
+# 网络操作
 
 ``` javascript
 systemctl status network   # 查看网络服务状态 
@@ -81,7 +77,7 @@ systemctl restart network   # 重启网络服务
 
 
 
-### 防火墙操作
+# 防火墙操作
 ``` javascript
 systemctl stop firewalld.service          #停止firewall
 systemctl disable firewalld.service       #禁止firewall开机启动
@@ -92,7 +88,7 @@ systemctl status firewalld.service        #查看防火墙状态
 
 
 
-### vim 命令行模式常用命令
+# vim 命令行模式常用命令
 
 | 命令 | 功能                        |
 | ---- | --------------------------- |
@@ -110,9 +106,9 @@ systemctl status firewalld.service        #查看防火墙状态
 
 
 
-### vim 底行模式常用命令
+# vim 底行模式常用命令
 
-#### 设置行号
+## 设置行号
 
 ``` javascript
 :set nu 	设置行号
@@ -120,7 +116,7 @@ systemctl status firewalld.service        #查看防火墙状态
 
 
 
-#### 文本替换
+## 文本替换
 
 ``` javascript
 :%s/旧文本/新文本/g	 文本替换
@@ -128,7 +124,7 @@ systemctl status firewalld.service        #查看防火墙状态
 
 
 
-#### 显示高亮
+## 显示高亮
 
 ``` sql
 
@@ -136,7 +132,7 @@ systemctl status firewalld.service        #查看防火墙状态
 
 
 
-#### 取消高亮
+## 取消高亮
 
 ``` sql
 linux vim取消高亮显示:
@@ -145,11 +141,11 @@ linux vim取消高亮显示:
 
 
 
-### curl命令行下直接获取当前IP信息
+# curl命令行下直接获取当前IP信息
 
 
 
-#### curl cip.cc
+## curl cip.cc
 
 ``` javascript
 [root@node01 ~]# curl cip.cc
@@ -167,7 +163,7 @@ URL	: http://www.cip.cc/223.104.20.95
 
 
 
-#### curl -L tool.lu/ip
+## curl -L tool.lu/ip
 
 ``` javascript
 [root@node01 ~]# curl -L tool.lu/ip
@@ -185,7 +181,7 @@ URL	: http://www.cip.cc/223.104.20.95
 
 
 
-#### curl myip.ipip.net
+## curl myip.ipip.net
 
 ``` javascript
 [root@node01 ~]# curl myip.ipip.net
@@ -196,7 +192,7 @@ URL	: http://www.cip.cc/223.104.20.95
 
 
 
-#### curl ipinfo.io
+## curl ipinfo.io
 
 ``` javascript
 [root@node01 ~]# curl ipinfo.io
@@ -217,7 +213,7 @@ URL	: http://www.cip.cc/223.104.20.95
 
 
 
-### Linux创建任意大小的文件
+# Linux创建任意大小的文件
 
 ``` shell
 dd if=/dev/zero of=/export/data/testFile.txt bs=300M count=1
@@ -242,7 +238,7 @@ dd if=/dev/zero of=/export/data/testFile.txt bs=300M count=1
 
 
 
-### nc(netcat)向某个端口发送数据
+# nc(netcat)向某个端口发送数据
 
 ``` properties
 # nc是netcat的简称，原本是用来设置路由器,我们可以利用它向某个端口发送数据
@@ -254,4 +250,45 @@ nc -lk 9999
 ```
 
 
+
+# 将一个字符串写入到文件中
+
+```shell
+[root@tanghui test]# tee ./test.json <<- 'EOF'
+> {
+> "name":"Tom","age":30
+> }
+> EOF
+{
+"name":"Tom","age":30
+}
+[root@tanghui test]# ll
+总用量 8
+-rw-r--r-- 1 root root 26 6月  22 10:18 test.json
+[root@tanghui test]# cat test.json 
+{
+"name":"Tom","age":30
+}
+[root@tanghui test]# 
+```
+
+
+
+# Linux 重启 /关机
+
+- 重启
+
+``` shell
+reboot
+
+init 6 
+```
+
+- 关机
+
+``` shell
+shutdown -h now
+
+init 0
+```
 

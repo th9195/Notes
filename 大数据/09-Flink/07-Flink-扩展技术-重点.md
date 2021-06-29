@@ -4,7 +4,7 @@
 
 # 1- End-to-End Exactly-Once-面试
 
-## 1-1 流处理语义
+## 1-1 流处理三种语义
 
 如果让我们自己去实现流处理数据语义:  
 
@@ -23,7 +23,8 @@ Exactly-Once-恰好一次/精准一次/精确一次,数据**不能丢失且不�
 - Exactly-Once
 
 ``` properties
-Exactly-Once --精准一次,  也就是说数据只会被处理一次,不会丢也不会重复,注意: 更准确的理解应该是只会被正确处理一次而不是仅一次
+Exactly-Once : 精准一次,  也就是说数据只会被处理一次,不会丢也不会重复;
+注意: 更准确的理解应该是只会被正确处理一次而不是仅一次
 ```
 
 
@@ -119,13 +120,13 @@ abort				// 回滚事务
 
 总结: 
 
-Flink通过 **Offet + Checkpoint + 两阶段事务提交** 来实现End-to-End Exactly-Once
+Flink通过 **Offet + State + Checkpoint + 两阶段事务提交** 来实现End-to-End Exactly-Once
 
 也就是要保证数据从Source到Transformation到Sink都能实现数据不会丢也不会重复,也就是数据只会被成功计算/处理/保存一次
 
 - Source: **Offset + Checkpoint** 
 
-- Transformation: **Checkpoint** 
+- Transformation: **State + Checkpoint** 
 
 - Sink: **两阶段事务提交+ Checkpoint** 
 
@@ -386,7 +387,7 @@ public class KafkaDemo {
 
 双流Join是Flink面试的高频问题。一般情况下说明以下几点就可以hold了：
 
- Join大体分类只有两种：**Window Join** 和 **Interval Join**。
+ Join大体分类只有两种：**Window Join** 和 **Interval Join** （间隔join）。
 
 - Window Join又可以根据Window的类型细分出3种：
 
@@ -1299,7 +1300,7 @@ public class FileSinkDemo {
 
 - 在env上进行设置
 
-- 在flink ru命令后加参数:    -p,--parallelism
+- 在flink run命令后加参数:    -p,--parallelism
 
 - 在flink-conf.yaml中:    parallelism.default: 1
 
@@ -1314,7 +1315,7 @@ public class FileSinkDemo {
 ```properties
 SourceOperator的并行度:一般和Kafka的分区数保持一致(一般百级,互联网公司有万级)
 TransformationOperator的并行度:一般不做随意更改,因为改了之后可能会导致shuffle重分区,什么时候改? 数据变多之后-调大并相度,数据变少如filter之后,可以调下并行度
-Sink的并行度:一般也不用边,如果往HDFS输出,要避免小文件,如往HBase输出避免过多的连接,可以调小并行度
+Sink的并行度:一般也不用改,如果往HDFS输出,要避免小文件,如往HBase输出避免过多的连接,可以调小并行度
 ```
 
 
@@ -1327,9 +1328,9 @@ Sink的并行度:一般也不用边,如果往HDFS输出,要避免小文件,如�
   - 目的是为了**并行读写**,提高**读写效率**,便于**存储,容错**(针对块做副本,便于恢复)
 - MR:数据切片 splits
   - 目的是为了**并行计算**
-- Hive:分区(分文件夹)和分桶(文件夹下分文件)
+- Hive:**分区(分文件夹)**和**分桶(文件夹下分文件)**
   - 如按照日期分区,按照小时分桶;
-  - 目的就是为了提高**查询效率**(读写效率)
+  - 目的就是为了提高**查询效率**(**读写效率**)
 - HBase:分Region,就是按照rowkey的范围进行分区
   - 目的也是为了提高**读写效率**
 - Kafka:分区Partition
@@ -1374,5 +1375,437 @@ sink:一般和kafka的分区数保持一致,如果sink到其他地方,灵活处�
 
 
 
+# 7- 面试题总结
 
+## 7-1 介绍一下Flink中的BroadcastState
+
+- **原理：**
+  - 下发/广播 [**配置、规则**]() 等 [低吞吐事件流 ]()到 下游 所有 task；
+  - 下游的 task [**接收**]()这些配置、规则并[**保存为 BroadcastState**](), 将这些配置[应用到另一个数据流]()的计算中
+  - 好处
+    - [**减少了数据的传输量**]()；
+- 使用场景
+  - [动态更新计算规则]()
+  - [实时增加额外字段]()
+
+- **使用步骤**
+  - 需要定义一个状态描述器 ：[**stateDescriptor**]()；
+  - 将某个流（数据小）广播出去：userDS.[**broadcast**]()(stateDescriptor);；
+  - 使用另外一个流（数据大）去连接广播流：logDS.[**connect**]()(broadcastDS)
+  - 处理合并后的流：connectDS.process
+    - processElement()
+      - **通过context 和状态描述器获取广播状态；**
+      - **使用广播状态中的数据；**
+    - processBroadcastElement()
+      - **获取老广播状态中的值；**
+      - **清空老广播状态的值；**
+      - **将新的数据，保存到广播状态中；**
+
+## 7-2 介绍一下Flink中的双流join
+
+-  Join大体分类只有两种：**Window Join** 和 **Interval Join** （间隔join）。
+  - [**Window Join**]()又可以根据Window的类型细分出3种：
+    
+    - **Tumbling** Window Join、
+    - **Sliding** Window Join、
+    - **Session** Widnow Join。
+    - Windows类型的join都是利用 **window的机制**，先将数据 **缓存在Window State** 中，当窗口触发计算时，执行join操作；
+    
+  - [**interval join**]()
+  
+    - 利用 **state存储** 数据再处理，区别在于state中的数据有失效机制，依靠数据触发数据清理；
+  
+    - interval join也是使用[**相同的key来join两个流**]()（流A、流B），
+  
+      并且流B中的元素中的时间戳，和流A元素的时间戳，有一个[**时间间隔**]()。
+  
+      [b.timestamp ∈ [a.timestamp + lowerBound; a.timestamp + upperBound]]() 
+  
+      **或者** 
+  
+      [a.timestamp + lowerBound <= b.timestamp <= a.timestamp + upperBound]()
+  
+- 原理图：
+
+  - **Tumbling** Window Join；
+
+  ![image-20210624161200133](images/image-20210624161200133.png)
+
+  - **Sliding** Window Join；
+
+  ![image-20210624161313993](images/image-20210624161313993.png)
+
+  - **Session** Widnow Join；
+
+  ![image-20210624161451320](images/image-20210624161451320.png)
+
+  - [**interval join**]()
+
+  ![image-20210624161139923](images/image-20210624161139923.png)
+
+- 代码
+
+  - windown join
+
+  ![image-20210624161822569](images/image-20210624161822569.png)
+
+  - interval join
+
+  ![image-20210624161635814](images/image-20210624161635814.png)
+
+
+
+
+
+
+
+
+
+
+
+## 7-3 介绍一下Flink中的End-to-End Exactly-Once
+
+### 7-3-1 流处理三种语义
+
+- At-most-once-最多一次,有可能**丢失**,实现起来最简单(不需要做任何处理)
+
+- At-least-once-至少一次,不会丢,但是可能会**重复**(先消费再提交)
+
+- Exactly-Once-恰好一次/精准一次/精确一次,数据**不能丢失且不能被重复**处理(先消费再提交 + 去重)
+- Flink中新增一个 [**End-to-End Exactly-Once**]()
+  - **端到端**的精确一致性：**source-Transformation-Sink**都可以保证**Exactly Once**;
+
+### 7-3-2 Flink如何实现的End-to-End Exactly-Once
+
+- 结论：
+  - Flink通过 **[Offet + State + Checkpoint + 两阶段事务提交]()** 来实现End-to-End Exactly-Once
+
+- Source
+
+  - 通过**offset**即可保证数据不丢失, 再结合后续的**Checkpoint**保证数据只会被成功处理/计算一次即可;
+
+- Transformation
+
+  - 通过Flink的 **State** + **Checkpoint**就可以完全可以保证;
+
+- Sink:
+
+  - 去重(维护麻烦)或[**幂等性**]()写入(Redis/HBase支持,MySQL和Kafka不支持)都可以, Flink中使用的是[**两阶段事务提交**+**Checkpoint**]()来实现的;
+
+  ``` properties
+  Flink+Kafka, Kafka是支持事务的,所以可以使用两阶段事务提交来实现
+  FlinkKafkaProducer<IN> extends TwoPhaseCommitSinkFunction  	//两阶段事务提交
+  beginTransaction 	// 开启事务
+  preCommit  			// 预提交事务
+  commit				// 提交事务
+  abort				// 回滚事务
+  ```
+
+### 7-3-3 两阶段事务提交 流程
+
+- 1.beginTransaction:开启事务
+
+- 2.preCommit:预提交
+
+- 3.commit:提交
+
+- 4.abort:终止
+
+![1615187365737](images/1615187365737.png)
+
+- 1.Flink程序启动运行,JobManager启动CheckpointCoordinator按照设置的参数**定期执行Checkpoint**
+
+- 2.有数据进来参与计算, **各个Operator(Source/Transformation/Sink)都会执行Checkpoint**
+
+- 3.将数据写入到外部存储的时候**beginTransaction开启事务**
+
+- 4.中间[各个Operator]()执行Checkpoint成功则各自执行**preCommit预提交**
+
+- 5.[所有的Operator]()执行完预提交之后则执行**commit最终提交**
+
+- 6.如果中间有任何preCommit失败则进行**abort终止**
+
+
+
+## 7-4 介绍一下Flink中的异步IO
+
+
+
+
+
+## 7-5 Flink 内存管理
+
+- [**Spark 内存管理**]()
+
+![image-20210515113205376](../08-Spark/images/image-20210515113205376.png)
+
+- [**Flink内存管理**]()
+
+![image-20210626104830367](images/image-20210626104830367.png)
+
+- [Flink JVM在大数据环境下存在的问题]()
+  1. Java 对象存储密度低;
+  2. Java GC可能会被反复触发，其中Full GC或Major GC的开销是非常大的，GC 会达到秒级甚至分钟级;
+  3. OOM 问题影响稳定性
+- **[Flink内存管理]()**
+  1. [**网络缓冲区**]()Network Buffers：用于**[缓存网络数据]()**的内存
+  2. [**内存池**]()Memory Manage pool：用于[**运行时的算法**]()（Sort/Join/Shufflt等）默认：70%
+  3. [**用户使用内存**]()Remaining (Free) Heap：用于[用户代码以及 TaskManager的数据]()
+- **[堆外内存]()**
+  - 用于执行一些**[IO操作]()**;
+  - [**zero-copy**]();
+  - 堆外内存在[**进程间是共享**]()的;
+
+
+
+### 7-5-1 Flink底层内存管理优化总结
+
+- **减少Full GC时间**；
+  - 因为所有常用数据都在[**Memory Manager**]() （内存池）里，这部分内存的生命周期是伴随TaskManager管理的而不会被GC回收；
+  - 其他的常用数据对象都是用户定义的数据对象，这部分会快速的被GC回收；
+
+- **使用堆外内存，减少OOM**；
+  - 所有的运行时的内存应用都从池化的内存中获取，而且运行时的算法可以在[**内存不足的时候将数据写到堆外内存**]()
+- **节约空间**；
+  - 由于Flink[**自定序列化/反序列化**]()的方法，所有的对象都以[**二进制的形式存储**]()，降低消耗；
+  - 对比Spark 也有个自定义的序列化[**kyro**]();
+-  **高效的[二进制]()操作和缓存友好;**
+  - 二进制数据以定义好的格式存储，可以高效地比较与操作。另外，该二进制形式可以把相关的值，以及hash值，键值和指针等相邻地放进内存中。这使得数据结构可以对CPU高速缓存更友好，可以从CPU的 L1/L2/L3 缓存获得性能的提升,也就是Flink的数据存储二进制格式符合CPU缓存的标准,非常[**方便被CPU的L1/L2/L3各级别缓存利用,比内存还要快**]()!
+
+
+
+## 7-6 总结一下多个框架中分区的作用
+
+### 7-6-1 各个框架的分区
+
+- HDFS:文件分块
+  - 目的是为了**并行读写**,提高**读写效率**,便于**存储,容错**(针对块做副本,便于恢复)
+- MR:数据切片 splits
+  - 目的是为了**并行计算**
+- Hive:**分区(分文件夹)**和**分桶(文件夹下分文件)**
+  - 如按照日期分区,按照小时分桶;
+  - 目的就是为了提高**查询效率**(**读写效率**)
+- HBase:分Region,就是按照rowkey的范围进行分区
+  - 目的也是为了提高**读写效率**
+- Kafka:分区Partition
+  - 目的为了提高**读写效率**
+- Spark:分区
+  - 目的是为了**并行计算**
+- Flink:分区/并行度
+  - 目的是为了**并行计算**
+
+总结: **[以后凡是遇到分区/分片/分桶/分Segment/分Region/分Shard...都是为了提高效率]()**
+
+### 7-6-2 如何设置分区/并行度？
+
+- **Flink**
+  - 算子operator.setParallelism(2);
+
+  - env.setParallelism(2);
+
+  - 提交任务时的客户端./bin/flink run -p  2 WordCount-java.jar .......
+
+  - 配置文件中flink-conf.yaml: parallelism.default: 2
+
+  - **[算子级别 > env级别 > Client级别 > 配置文件级别]()**  (越靠前具体的代码并行度的优先级越高)
+
+- **Spark**
+  - 算子；
+  - sc.setParxxxx；
+  - 配置文件；
+  - **[算子级别 > sc级别 >  配置文件级别]()**  (越靠前具体的代码并行度的优先级越高)
+- **总结**：
+  - 设置分区或并行度三板斧：[**算子->程序入口->配置文件**]()；原则：[**就近原则**]()；
+
+
+
+
+
+## 7-7 使用Metrics监控Flink
+
+- **Metrics** 可以在 Flink 内部**[收集一些指标]()**;
+
+- 通过这些指标让开发人员更好地理解作业或[**集群的状态**]();
+
+- 也可以整合第三方工具对Flink进行监控；
+
+  - 如：**[普罗米修斯 和 Grafana 监控Flink运行状态]()**
+
+- Metrics 的类型
+
+  - 1，常用的如 **[Counter]()**，写过 mapreduce 作业的开发人员就应该很熟悉 Counter，其实含义都是一样的，就是对一个计数器进行累加，即对于多条数据和多兆数据一直往上加的过程。
+  - 2，**[Gauge]()**，Gauge 是最简单的 Metrics，它反映一个值。比如要看现在 [**Java heap 内存**]()用了多少，就可以每次实时的暴露一个 Gauge，Gauge 当前的值就是heap使用的量。
+  - 3，[**Meter**]()，Meter 是指统计吞吐量和单位时间内发生[**“事件”的次数**]()。它相当于求一种速率，即[事件次数除以使用的时间]()。
+  - 4，[**Histogram**]()，Histogram 比较复杂，也并不常用，Histogram 用于统计一些数据的分布，比如说 Quantile、Mean、StdDev、Max、Min 等。
+
+   
+
+  Metric 在 Flink 内部有多层结构，以 Group 的方式组织，它并不是一个扁平化的结构，Metric Group + Metric Name 是 Metrics 的唯一标识。
+
+![image-20210624182646549](images/image-20210624182646549.png)
+
+## 7-8 Flink 性能优化
+
+### 7-8-1 **[复用对象]()**
+
+- 在apply或者process算子收集数据的时候需要new 对象；可以将这个new对象提到外面去；
+
+``` java
+stream.apply(new WindowFunction<WikipediaEditEvent, Tuple2<String, Long>, String, TimeWindow>() {
+    // 将创建对象提到外面， 就不用每次都去new了
+    private Tuple2<String, Long> result = new Tuple<>();
+    
+    @Override
+    public void apply(String userName, TimeWindow timeWindow, Iterable<WikipediaEditEvent> iterable, Collector<Tuple2<String, Long>> collector) throws Exception {
+        long changesCount = ...
+        // Set fields on an existing object instead of creating a new one
+        result.f0 = userName;
+        // Auto-boxing!! A new Long value may be created
+        result.f1 = changesCount;
+        // Reuse the same Tuple2 object
+        collector.collect(result);
+    }
+}
+```
+
+### 7-8-2 **[数据倾斜优化]()**
+
+- 对key进行均匀的打散处理（[**hash，加盐**]()等）
+- [**自定义分区器**]()
+- 使用**[Rebalabce]()**
+
+### 7-8-3 异步IO
+
+
+
+### 7-8-4 合理调整并行度
+
+- 数据**过滤后** 可以**减少并行度**；
+- 数据**合并后** 可以**增加并行度**；
+- 有**大量小文件**写入HDFS 可以**减少并行度**；
+
+
+
+## 7-9 Flink VS Spark
+
+### 7-9-1 角色
+
+- Spark Streaming 运行时的角色(standalone 模式)主要有：
+  - **Master**:主要负责整体集群**[资源的管理和应用程序调度]()**；
+  - **Worker**:负责单个节点的资源管理，driver 和 executor 的启动等；
+  - **Driver**:用户入口程序执行的地方，即 SparkContext 执行的地方，主要是 **[DAG 生成、stage 划分、task 生成及调度]()**；
+  - **Executor**:负责执行 **[task]()**，反馈执行状态和执行结果。
+
+- Flink 运行时的角色(standalone 模式)主要有:
+  - **Jobmanager**: 协调分布式执行，他们[**调度任务、协调 checkpoints、协调故障恢复**]()等。至少有一个 JobManager。高可用情况下可以启动多个 JobManager，其中一个选举为 leader，其余为 standby；
+  - **Taskmanager**: 负责执行具体的 [**tasks、缓存、交换数据流**]()，至少有一个 TaskManager；
+  - **Slot**: 每个 task slot 代表 TaskManager 的一个固定部分资源，Slot 的个数代表着 taskmanager 可并行执行的 [**task 数**]()。
+
+### 7-9-2 应用场景
+
+- **Spark**:主要用作**离线批处理** , 对延迟要求不高的实时处理(微批) ,**DataFrame和DataSetAPI 也支持 "流批一体"**
+- **Flink**:主要用作**实时处理** ,注意Flink**1.12**开始支持真正的**流批一体**
+
+
+
+### 7-9-3 数据抽象
+
+- Spark : 
+  - RDD(不推荐)  SparkCore中的**弹性分布式数据集；**
+  - DStream(不推荐) SparkStreaming 中的 **时间轴上的RDD集合；**
+  - [**DataFrame和DataSet**]()  SparkSQL/StructuredStreaming 中的；
+    - DataFrame：不支持泛型；默认Row
+    - DataSet：支持泛型；
+
+- Flink : 
+  - DataSet(1.12软弃用) 
+  - [**DataStream /Table&SQL**]()(快速发展中)
+
+
+
+### 7-9-4 流程原理
+
+#### 7-9-4-1 Spark
+
+![image-20210629100219018](images/image-20210629100219018.png)
+
+![1611307412726](images/1611307412726.png)
+
+![1611307379552](images/1611307379552.png)
+
+#### 7-9-4-2 Flink
+
+![1611307456233](images/1611307456233.png)
+
+![1611307477718](images/1611307477718.png)
+
+![1611307538448](images/1611307538448.png)
+
+![1611307577308](images/1611307577308.png)
+
+
+
+![1611307685689](images/1611307685689.png)
+
+
+
+### 7-9-5时间机制
+
+- Spark : 
+  - SparkStreaming只支持处理时间 
+  -  StructuredStreaming开始支持事件时间
+- Flink : 直接支持事件时间 /处理时间/摄入时间
+
+
+
+### 7-9-6 容错机制
+
+- Spark : 
+  - 缓存/持久化 +Checkpoint(应用级别)  
+  - StructuredStreaming中的Checkpoint也开始借鉴Flink使用Chandy-Lamport algorithm分布式快照算法
+
+- Flink: State + Checkpoint(Operator级别)  + [**自动重启策略**]() + **[Savepoint]()** + **[两阶段事务提交]()**
+
+
+
+### 7-9-7 窗口
+
+- Spark
+  - 支持基于**时间**的**滑动/滚动**  ；
+  - 窗口时间必须是微批时间的**倍数**：要求windowDuration和slideDuration必须是batchDuration的倍数
+
+- Flink
+  - 窗口机制更加灵活/功能更多
+  - 支持基于**时间/数量的滑动/滚动 和 会话窗口**
+
+### 7-9-8 整合kafka
+
+- **Spark Streaming**
+  - 两种模式
+    - Receiver：接收器模式；
+    - Direct : 直连模式；（**[分区对分区的模式]()**）
+  - 两种管理offset模式
+    - **自动提交offset** 
+    - **手动提交offset**
+- **Structured Streaming**
+  - 所有的kafka配置都是通过**option来配置**的；
+  - 获取到的数据信息都是**二进制数据 binary类型**；
+    - df.selectExpr("CAST(key AS STRING)","[**CAST(value AS STRING)**]()")
+  - **kafka获取数据后Schema字段信息如下：**
+    - **数据信息：**
+      - **key** 
+      - **value**
+    - **元数据：**
+      - **topic**
+      - **partition**
+      - **offset**
+- **Flink**
+  - addSource  **[FlinkKafkaConsumer]()**
+  - addSink **[FlinkKafkaProducer]()**
+
+
+
+### 7-9-9 其他的
+
+Flink的高级功能 : [Flink CEP可以实现 实时风控]() .....
 

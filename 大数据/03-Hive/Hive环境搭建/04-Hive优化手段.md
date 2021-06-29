@@ -242,7 +242,7 @@ set hive.optimize.union.remove=true;  -- 开启 union all 的优化
   
     ```properties
     如果使用方案二进行group by 数据倾斜的解决, 要求sql中不允许出现多个列做distinct操作, 只能出现一次
-  
+    
     例如: 
   	SELECT ip, count(DISTINCT uid), count(DISTINCT uname) FROMlog GROUP BY ip 
     		此操作 就会直接报错, 因为此sql中出现多次distinct操作
@@ -498,7 +498,7 @@ set hive.exec.mode.local.auto.input.files.max=10;
 
 ## 5.空key过滤-转换
 
-### 5.1空key 过滤
+### 5.1 空key 过滤
 
 ​		有时join超时是因为某些key对应的数据太多，而相同key对应的数据都会发送到相同的reducer上，从而导致内存不够。此时我们应该仔细分析这些异常的key，很多情况下，这些key对应的数据是异常数据，我们需要在SQL语句中进行过滤。例如key对应的字段为空，操作如下：
 

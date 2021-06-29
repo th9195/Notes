@@ -202,3 +202,25 @@ windows快捷键：#
 
 
 
+# 9- 自定义表格
+
+<table>
+  	<tr>
+		<td>小王</td>
+		<td>小小王</td>
+	<tr>
+	<tr>
+		<td colspan="2">隔壁老王</td>
+	<tr>
+	<tr>
+		<td>车神</td>
+		<td>名车</td>
+	</tr>
+	<tr>
+		<td rowspan="2">隔壁老王</td>
+		<td>自行车</td>
+	</tr>
+	<tr>
+		<td>电瓶车</td>
+	</tr>
+</table>

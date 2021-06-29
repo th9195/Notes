@@ -12,37 +12,43 @@
 
   - 核心概念/名词
 
-    Client:提交任务的客户端
+    Client:**[提交任务]()**的客户端
 
-    JobManager:资源管理/任务调度的进程
+    JobManager:[**资源管理/任务调度**]()的进程
 
-    TaskManager:负责真正的执行任务的进程
+    TaskManager:负责真正的[**执行任务**]()的进程
 
-    Slot:TaskManager中真正执行任务的线程
+    Slot:TaskManager中真正执行任务的**[线程]()**
 
-    Operator:Flink中的每一个计算操作/算子/步骤/计算单元
+    Operator:Flink中的每一个计算[**操作/算子/步骤/计算单元**]()    **[RDD]()**
 
-    OperatorChain:多个OneToOne的Operator可以合并为一个OperatorChain
+    OperatorChain:多个OneToOne的Operator可以合并为一个OperatorChain  **[Stage]()**
 
-    StreamingDataFlow:Flink程序中的多个Operator串行化之后形成的一条执行流程(DAG)
+    **[StreamingDataFlow]()** :Flink程序中的多个**[Operator串行化]()**之后形成的一条执行流程(**[DAG]()**)
 
     Partition:每个Operator可以有1个~多个分区
 
-    SubTask:分区上的一系列操作
+    SubTask:**[分区上的一系列操作]()**
 
-    Parallelism:同时运行的/并行的SubTask数量
+    Parallelism:同时运行的/**[并行的SubTask数量]()**
 
-    Task:合并后的OperatorChain中的(或不能合并的Operator中的)多个SubTask组成Task
+    Task:合并后的OperatorChain中的(或不能合并的Operator中的)**[多个SubTask组成Task]()**
 
-    TaskSlot:运行SubTask的线程
+    TaskSlot:运行[**SubTask的线程**]()
 
-    StreamGraph:在Clinet端根据Operator的执行顺序串行化的流程图
+    [**StreamGraph**]():在Clinet端根据Operator的执行顺序串行化的**[流程图]()**
 
-    JobGraph:在Clinet端根据Operator的OneToOne关系,合并化之后流程图
+    **[JobGraph]()**:在Clinet端根据Operator的OneToOne关系,**[合并化之后的OperatroChain流程图]()**
 
-    ExecutionGraph:在JobManager上根据并行度设置进行并行化之后的流程图
+    **[ExecutionGraph]()**:在JobManager上根据并行度设置进行**[并行化之后的流程图]()**
 
     物理执行图:在TaskManager上真正执行的流程图
+
+- 四张图：
+  - **[StreamingDataFlow]()** :Flink程序中的多个**[Operator串行化]()**之后形成的一条执行流程(**[DAG]()**)
+  - [**StreamGraph**]():在Clinet端根据Operator的执行顺序串行化的**[流程图]()**
+  - **[JobGraph]()**:在Clinet端根据Operator的OneToOne关系,**[合并化之后的OperatroChain流程图]()**
+  - [**ExecutionGraph**]():在JobManager上根据**并行度**设置进行**[并行化之后的流程图]()**
 
 
 
@@ -390,6 +396,9 @@ public class WindowDemo02 {
 
 
 ### 3-5-3 会话窗口
+
+- 概念
+  - 注意:Flink还支持一个特殊的窗口:**[Session会话窗口]()**,需要**[设置一个会话超时时间]()**,如30s,则表示30s内**[没有数据到来,则触发上个窗口的计算]()**
 
 #### 3-5-3-1 需求
 
@@ -1108,9 +1117,9 @@ public class SourceDemo03_Socket {
 
 ## 5-2 有状态计算和无状态计算的应用场景
 
-- 无状态计算:数据转换,过滤等操作直接使用无状态的map/filter即可
+- 无状态计算:数据**[转换,过滤]()**等操作直接使用无状态的map/filter即可
 
-- 有状态计算:需要做聚合/比较的操作得使用有状态的sum/reduce/maxBy/minBy....
+- 有状态计算:需要做**[聚合/比较]()**的操作得使用有状态的sum/reduce/maxBy/minBy....
 
 注意: Flink中关于状态State全部都维护好了 ,一般情况下都是直接使用,  不需要额外的操心! 特殊业务(后面项目中会被股票的实时数据放入状态方便后续的使用)可能会需要手动处理状态! 所以接下来学习手动处理状态! 
 
@@ -1131,6 +1140,9 @@ public class SourceDemo03_Socket {
 
 
 ### 5-3-2 Keyed State & Operator State
+
+- 本质区别：
+  - **[KeyedState 有key ; Operator 不需要有key]()**；
 
 ![1615106768861](images/1615106768861.png)
 
@@ -1240,9 +1252,9 @@ public class StateDemo01 {
 
 https://ci.apache.org/projects/flink/flink-docs-stable/dev/stream/state/state.html
 
-需求:使用Operator State - ListState存储offset模拟FlinkKafkaConsumer的offset维护
+需求:使用Operator State - ListState 存储offset模拟FlinkKafkaConsumer的offset维护
 
-注意:开发中还是直接使用FlinkKafkaConsume自带的功能即可
+注意:**[开发中还是直接使用FlinkKafkaConsume自带的功能即可]()**
 
 ```java
 package cn.itcast.state;
@@ -1366,11 +1378,249 @@ public class StateDemo02 {
 
 
 
+# 6- 面试题总结
+
+## 6-1核心概念/名词
+
+- Client:**[提交任务]()**的客户端
+- **[JobManager]()**:[**资源管理/任务调度**]()的进程
+- **[TaskManager]()**:负责真正的[**执行任务**]()的进程
+- Slot:TaskManager中真正执行任务的**[线程]()**
+- Operator:Flink中的每一个计算[**操作/算子/步骤/计算单元**]()    **[RDD]()**
+- **[OperatorChain]()**:多个OneToOne的Operator可以合并为一个OperatorChain  **[Stage]()**
+- [**OneToOne 和 Redistribute**]()  窄依赖 和宽依赖
+- **[StreamingDataFlow:Flink]()**程序中的多个**[Operator串行化]()**之后形成的一条执行流程(**[DAG]()**)
+- Partition:每个Operator可以有1个~多个**[分区]()**
+
+
+- SubTask:**[分区上的一系列操作]()**
+
+
+- Parallelism:同时运行的/**[并行的SubTask数量]()**
+
+- Task:合并后的OperatorChain中的(或不能合并的Operator中的)**[多个SubTask组成Task]()**
+
+- **[TaskSlot]()**:运行[**SubTask的线程**]()
+- [**StreamGraph**]():在Clinet端根据Operator的执行顺序串行化的**[流程图]()**
+- **[JobGraph]()**:在Clinet端根据Operator的OneToOne关系,**[合并化之后的OperatroChain流程图]()**
+- **[ExecutionGraph]()**:在JobManager上根据并行度设置进行**[并行化之后的流程图]()**
+- 物理执行图:在TaskManager上真正执行的流程图
+
+
+
+## 6-2 Flink中的四张图
+
+- **[StreamingDataFlow]()** :Flink程序中的多个**[Operator串行化]()**之后形成的一条执行流程(**[DAG]()**)
+- [**StreamGraph**]():在Clinet端根据Operator的执行顺序串行化的**[流程图]()**
+- **[JobGraph]()**:在Clinet端根据Operator的OneToOne关系,**[合并化之后的OperatroChain流程图]()**
+- [**ExecutionGraph**]():在JobManager上根据**并行度**设置进行**[并行化之后的流程图]()**
+
+
+
+## 6-3 Flink 中Source-Transformation-Sink-Connector 常用API
+
+- 2.Flink-DataStream-API-Source
+
+  - 预定义的File/Dir/Collection/开始结束数字生成器/Socket
+
+  - 自定义的 **[addSource]()**
+
+    
+
+- 3.Flink-DataStream-API-Transformation
+
+  - map/flatMap/filter/reduce/sum...keyBy
+  - **union和connect**
+    - union:合并**相同类型**的DS;
+    - connect可以**[合并不同类型]()**的DS;
+  - sideOutput : 侧道输出
+  - **[rebalance]()** ： （底层原理：轮询）可以一定程度上的解决数据倾斜问题；
+
+
+
+- 4.Flink-DataStream-API-Sink
+  - print/File
+  - 自定义 ： addSink 
+
+
+
+- 5.Flink-DataStream-API-Connectors
+  - JDBC
+  - Kafka
+    - Source-**[FlinkKafkaConsumer]()**("主题",反序列化规则,Properties(集群地址))
+    - Sink-**[FlinkKafkaProducer]()**("主题",序列化规则,Properties(集群地址))
+  - Redis
+    - 需要使用第三方工具
+
+
+
+## 6-4 介绍一下Flink中的窗口
+
+- Spark窗口
+  - 基于时间的**滑动窗口**；
+  - 基于时间的**滚动窗口**；
+- Flink
+  - 基于时间的**滑动窗口**；
+    - window(**[SlidingProcessingTimeWindows]()**.of(Time.seconds(10), Time.seconds(5)))
+  - 基于时间的**滚动窗口**；
+    - window(**[TumblingProcessingTimeWindows]()**.of(Time.seconds(5)))
+  - 基于数量的**滑动窗口**；
+    - **[countWindow]()**(5, 3)
+  - 基于数量的**滚动窗口**；
+    - **[countWindow]()**(5)
+  - 基于**会话窗口**；
+    - window(**[ProcessingTimeSessionWindows.withGap]()**(Time.seconds(10)))
+    - **[Session会话窗口]()**,需要**[设置一个会话超时时间]()**,如30s,则表示30s内**[没有数据到来,则触发上个窗口的计算]()**
+
+## 6-5 Flink有关window的算子
+
+![1615083372257](images/1615083372257.png)
+
+## 6-6 介绍一下time
+
+- 时间概念
+  - **[EventTime]()**:事件时间,是事件/数据真真正正发生时/产生时的时间 --- 用的最多
+  - IngestionTime:摄入时间,是事件/数据**到达流处理系统的时间**
+  - **[ProcessingTime]()**:处理时间,是事件/数据**被处理/计算时的系统的时间**
+
+
+
+- 注意：
+  - [**SparkStreaming**]() 只支持 **processing time**;
+  - **[Structured Streaming]()** 中只支持processing**处理时间** 和 EventTime **事件时间**
+  - **[Flink 中都支持]()**；
+  - 但是目前在开发中一般都使用EventTime事件时间；
+
+- 总结:
+  - 1.事件时间确实重要, 因为它能够代表事件/数据的**本质**,是事件/数据真真正正发生/产生的时间
+  - 2.按照事件时间进去处理/计算,会存在一定的**难度**, 因为数据可能会因为网路延迟等原因, 发生**乱序或延迟**到达, 那么最后的计算结果就有可能错误或数据丢失
+  - 3.需要有技术来解决上面的问题,使用**Watermark技术来解决**!
+
+
+
+## 6-7 Watermark是什么?--时间戳
+
+Watermark就是给数据额外添加的一列时间戳! 
+
+Watermark = **[当前最大的事件时间  -   最大允许的延迟时间(或最大允许的乱序度时间)]()**
+
+
+
+## 6-8 Watermark能解决什么问题,如何解决的?
+
+- 有了Watermark 就可以 **在一定程度上** 解决数据 **乱序或延迟** 达到问题! 
+
+
+- 有了Watermark就可以**根据Watermark来决定窗口的触发时机**,满足下面的条件才触发:
+  - 1.<span style="color:red;background:white;font-size:20px;font-family:楷体;">**窗口有数据**</span>
+  - 2.<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Watermark >= 窗口的结束时间**</span>
+
+满足以上条件则触发窗口计算! 
+
+- **以前**窗口触发:**系统时间到了窗口结束时间**就触发
+
+- **现在**窗口触发:**Watermark  >= 窗口的结束时间**
+- 而 Watermark =  **当前最大的事件时间  -   最大允许的延迟时间(或最大允许的乱序度时间)**
+
+- 就意味着, 通过Watermark改变了窗口的触发时机了, 那么接下来我们看如何改变的/如何解决前面的问题的
 
 
 
 
+- 需要记住:
+
+
+<span style="color:red;background:white;font-size:20px;font-family:楷体;">**Watermark =  当前最大的事件时间  -   最大允许的延迟时间(或最大允许的乱序度时间)**</span>
+
+<span style="color:red;background:white;font-size:20px;font-family:楷体;">**窗口触发时机 : Watermark >= 窗口的结束时间**</span>
 
 
 
+## 6-9 Watermark总结: 
+
+1. Watermark 是一个单独计算出来的**时间戳**
+2. Watermark 当前**[最大的事件时间 - 最大允许的延迟时间]()**(乱序度)
+3. Watermark可以通过改变窗口的触发时机 **[在 一定程度上解决数据乱序或延迟达到的问题]()**
+
+4. **[Watermark >= 窗口结束时间]()** 时 就会触发窗口计算(窗口中得有数据)
+5. 延迟或乱序严重的数据还是丢失, 但是可以通过调大 最大允许的延迟时间(乱序度) 来解决, 或 使用后面要学习的**[侧道输出流]()** 来单独收集延迟或乱序严重的数据,保证数据不丢失! 
+
+
+
+## 6-10 Watermark  常用API
+
+- 告诉Flink使用EventTime
+  - env.[**setStreamTimeCharacteristic**]()(**TimeCharacteristic.EventTime**);
+
+- 告诉Flink最大延迟时间
+  - **[forBoundedOutOfOrderness]()**
+
+- 告诉Flink哪一列时时间时间
+  - **[withTimestampAssigner]()**((order, time) -> {return order.getCreateTime();})
+
+
+
+## 6-11 介绍一下Flink中State 分类
+
+- **无状态**计算
+  - 不需要考虑历史数据；
+- **有状态**计算
+  - 需要考虑历史数据；
+
+- 从管理角度分类：
+  - **Managed State** :托管状态
+    - Managed State 由 [Flink Runtime 管理，自动存储，自动恢复，在内存管理上有优化]()；
+    - 数据结构，如 [Value、List、Map]() 等；
+  - **Raw State**：原始状态
+    - 而 Raw State 需要[用户自己管理，需要自己序列化]()，Flink 不知道 State 中存入的数据是什么结构，只有用户自己知道，需要最终序列化为可存储的数据结构。
+    - 只支持[字节数组]()
+
+![1615106660643](images/1615106660643.png)
+
+
+
+- [**从是否有key 角度分类**]()
+  - **[Managed State 分为两种，Keyed State 和 Operator State]()** 
+  - Keyed State 
+    - Keyed State是基于KeyedStream上的状态;
+    - **[每一个key，都对应一个state]()**，如stream.keyBy(…)
+    - 支持数据结构：[**ValueState ListSate ReducingState AggregatingState MapState**]()
+  - Operator State ：案例: 保存**KafkaSource 中的offset**;
+    - Operator State又称为 **[non-keyed state;]()**
+    - 与Key无关的State，每一个 [operator state 都仅与一个 operator 的实例绑定]()。
+    - 支持数据结构：**[ListState]()**;
+    - 需要实现**[CheckpointedFunction或者ListCheckpointed]()**
+
+![1615106768861](images/1615106768861.png)
+
+## 6-12 Flink中 max 与 maxBy有和区别？
+
+- max只能[**保证value**]()是对的； [**不能保证key**]() 是对的；
+- **maxBy可以[保证key-value 都正确]()；**
+
+
+
+## 6-13 使用Keyed State 步骤
+
+- 定义一个状态
+  - private **[ValueState]()**<Long> maxValueState = null;  
+  - [**MapState**]()<String, StockBean> stockMs = null;
+
+- 创建状态描述器
+  - ValueStateDescriptor<Long> stateDescriptor = new **[ValueStateDescriptor]()**<>("maxValueState", Long.class);
+  - MapStateDescriptor<String, StockBean> descriptor = new [**MapStateDescriptor**]()<String, StockBean>("stockMs",String.class,StockBean.class);
+
+- 获取状态对象
+
+  - maxValueState = **[getRuntimeContext().getState(stateDescriptor);]()**
+
+  - stockMs = **[getRuntimeContext().getMapState(descriptor);]()**
+
+- 使用状态中的数据
+  - Long maxValue = maxValueState.**[value();]()**
+  - StockBean lastStockBean = **[stockMs.get(tempCleanBean.getSecCode());]()**
+
+- 更新状态中的数据
+  - maxValueState.**[update]()**(maxValue);
+  - stockMs.**[put]()**(stockBean.getSecCode(),stockBean);
 

@@ -191,6 +191,8 @@ TaskManager:执行任务---Spark中的Worker/Exector
 
 
 - **TaskSlot 共享**
+  - **原理： 就是map端跑完后，该线程可以接着运行reduce端的任务；**
+  - 这样线程就没有必要回收了。 
 
 ![1614908718454](images/1614908718454.png)
 
@@ -268,29 +270,31 @@ TaskManager:执行任务---Spark中的Worker/Exector
   
   ```
 
-timeoutMillis = 0 表示每条数据都会触发 flush，直接将数据发送到下游，相当于没有Buffer了(避免设置为0，可能导致性能下降)
+- **timeoutMillis = 0** 表示每条数据都会触发 flush，直接将数据发送到下游，相当于没有Buffer了(避免设置为0，可能导致性能下降)
 
-  timeoutMillis = -1 表示只有等到 buffer满了或 CheckPoint的时候，才会flush。相当于取消了 timeout 策略
+- **timeoutMillis = -1** 表示只有等到 buffer满了或 CheckPoint的时候，才会flush。相当于取消了 timeout 策略
 
   总结:
-  Flink以缓存块为单位进行网络数据传输,用户可以设置缓存块超时时间和缓存块大小来控制缓冲块传输时机,从而控制Flink的延迟性和吞吐量
-  ```
+  [Flink以缓存块为单位进行网络数据传输,用户可以设置缓存块超时时间和缓存块大小来控制缓冲块传输时机,从而控制Flink的延迟性和吞吐量]()
+
+
+
+
+
+- Flink在底层原理/思想上已经实现了流批统一, 并且在Flink1.12的时候在API层面也实现了流批统一,使用DataStream就可以处理流或批,通过一句代码设置即可
+
+- https://ci.apache.org/projects/flink/flink-docs-release-1.12/
+
+  ```java
   
-  
-  
-  - Flink在底层原理/思想上已经实现了流批统一, 并且在Flink1.12的时候在API层面也实现了流批统一,使用DataStream就可以处理流或批,通过一句代码设置即可
-  
-  - https://ci.apache.org/projects/flink/flink-docs-release-1.12/
-  
-    ```java
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    //env.setRuntimeMode(RuntimeExecutionMode.STREAMING);//指定计算模式为流
-    //env.setRuntimeMode(RuntimeExecutionMode.BATCH);//指定计算模式为批
-    env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);//自动
-    //不设置的话默认是流模式defaultValue(RuntimeExecutionMode.STREAMING)
+  StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+  //env.setRuntimeMode(RuntimeExecutionMode.STREAMING);//指定计算模式为流
+  //env.setRuntimeMode(RuntimeExecutionMode.BATCH);//指定计算模式为批
+  env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);//自动
+  //不设置的话默认是流模式defaultValue(RuntimeExecutionMode.STREAMING)
   ```
 
-    ![1614911911567](images/1614911911567.png)
+
 
 
 
@@ -312,7 +316,7 @@ https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/datastream_api.
 
 ### 4-1-1 Collection
 
-```
+```properties
 一般用于学习测试时编造数据时使用
 1.env.fromElements(可变参数);
 2.env.fromColletion(各种集合);
@@ -365,7 +369,7 @@ public class SourceDemo01_Collection {
 
 ### 4-1-2 File
 
-env.readTextFile(本地/HDFS文件/文件夹);//压缩文件也可以
+[env.readTextFile(本地/HDFS文件/文件夹);//压缩文件也可以]()
 
 ```java
 package cn.itcast.source;
@@ -912,7 +916,7 @@ public class TransformationDemo03_Split_Select_SideOutputs {
         //TODO 2.source-加载数据
         DataStream<Integer> ds = env.fromElements(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         //TODO 3.transformation-数据转换处理
-        //将流中的数据根据奇偶性分层2个流
+        //将流中的数据根据奇偶性分为2个流
         //old-API-已经被移除了
         /*SplitStream<Integer> splitResult = ds.split(new OutputSelector<Integer>() {
             @Override
@@ -1625,7 +1629,324 @@ ExecutionGraph:
 
 
 
+# 8- 面试题
+
+上课听懂,课后花时间自己在图上标一下
+
+## 8-1 角色分工
+
+- **Client**: 提交任务 --- Spark中的Driver
+  - 提交任务；
+
+- **JobManager**:管理任务---Spark中的Master
+
+  - 集群的**协调者**；（任务管理+资源管理）
+  - 接收**FlinkJob**;
+  - **协调检查点**（checkpoint）；
+  - **Failover 故障恢复**；
+  - **管理从节点**TaskManager;
+
+  
+
+- **TaskManager**:执行任务---Spark中的Worker/Exector
+  - TaskManager 中有多个TaskSlot:线程;
+  - 是**实际执行计算**的工作者；
+  - 管理**自己的资源**；
+  - 启动的时候讲**资源汇报**给JobManager;
 
 
 
+![1614907088940](images/1614907088940.png)
+
+
+
+## 8-2 执行流程
+
+![1614907448459](images/1614907448459.png)
+
+- **Flink on Yarn 流程介绍：**
+
+1. Client（**客户**） 提交任务（项目）给ResourceManager(**公司**)；
+2. ResourceManager（**产品线**） 会指定一个AppMaster（**项目经理**） 去管理这个任务（项目），在一个nodemanager 上启动AppMaster（**项目经理**）；
+3. AppMaster（**项目经理**） 会向ResourceManager （**公司**）中的ApplicationManager（**产品线**） 去注册任务；
+4. AppMaster（**项目经理**） 会向ResourceManager （**公司**）中的Scheduler（**资源管理部门**）申请资源；
+5. Scheduler（**资源管理部门**） 将资源通过Container的方式打包给AppMaster（**项目经理**）；
+6. AppMaster（**项目经理**） 启动一个JobManager （**技术总监**）去管理这个任务的具体细节；
+7. AppMaster（**项目经理**） 根据资源信息去找到各个TaskManager（**模块负责人**）并开始执行计算任务（工作）；
+8. TaskManager（**模块负责人**）启动后向JobManager（**技术总监**）发送**心跳包**（实时沟通）；
+9. JobManager（**技术总监**）与AppMaster（**项目经理**）发送心跳包；
+10. AppMaster（**项目经理**） 与ApplicationsManager（**产品线**）发送心跳包；
+
+
+
+## 8-3 StreamingDataFlow（DAG）
+
+![image-20210424113254271](images/image-20210424113254271.png)
+
+
+
+**类似于Spark中的DAG**
+
+![1614908103251](images/1614908103251.png)
+
+
+
+
+
+![1614908352876](images/1614908352876.png)
+
+
+
+## 8-4 TaskSlot
+
+- TaskManager 中JVM进程中可以**运行多个线程**，就是TaskSlot;
+- **TaskSlot任务槽**：用于运行subTask任务线程的线程槽；
+- TaskSlot的数量决定了最多可以同时运行的**线程数量**，也就是**并行度**；
+
+![1619097903215](images/1619097903215.png)
+
+![1614908563676](images/1614908563676.png)
+
+
+
+
+
+- **TaskSlot 共享**
+  - Flink中的TaskSlot可以共享， 也就是[**SlotSharing 机制**]()
+  - **原理： 就是map端跑完后，该线程可以接着运行reduce端的任务；**
+  - 就是线程复用，这样线程就没有必要回收了。 
+
+![1614908718454](images/1614908718454.png)
+
+
+
+
+
+## 8-5 执行图生成流程
+
+![image-20210408105610041](images/image-20210408105610041.png)
+
+![1614908957524](images/1614908957524.png)
+
+
+
+
+
+## 8-6 总结Spark VS Flink 名词解释
+
+
+
+| Flink         | Spark             |                                                   |
+| ------------- | ----------------- | ------------------------------------------------- |
+| Operator      | RDD               | 弹性分布式数据集                                  |
+| DataFlow      | DAG               | 执行流程图                                        |
+| OneToOne      | 窄依赖            | 一对一或者多对一传输数据                          |
+| Redistribute  | 宽依赖（shuffle） | 一对多的传输数据                                  |
+| OperatorChain | Stage             | 根据shuffle依赖划分出来的执行阶段（有多个子任务） |
+| SubTask       | Task              | 每个任务(多个操作)                                |
+| Task          | TaskSet           | 任务集（同一个Stage中的各个Task组成的集合）       |
+| Partition     | Partition         | 分区                                              |
+| Parallelism   | Parallelism       | 并行度                                            |
+
+- 注意： 
+
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**OperatorChain 和 Task(Flink) 是从不同的角度，去描述同一个东西；**</span>
+  - OperatorChain从operator角度；多个OneToOne的Operator组成OperatorChain。（水平方向）
+  - Task从任务的角度；多个subTask 组成Task集（分区，垂直方向）
+
+  - Task 是**动态**的任务；OperatorChain 是**静态**的图；
+
+
+
+## 8-7 流处理相关概念-理解
+
+- 批处理:对一批数据(历史数据/离线数据/**有界数据流**)进行处理分析,运行一次得到结果就可以停止,失败了,重新跑一次即可, 如对昨天/上周/上个月/前3个月/前6个月/前1年/...的数据进行历史数据分析,时效性差
+
+- 流处理:对流式数据(实时数据/**无界数据流**)进行实时的处理计算分析,**启动之后需要一直运行,不能停**,如果中间运行失败需要支持自动恢复(容错), 如实时计算双十一交易大屏数据,实时道路/股票交易/工厂设备监控预警,时效性高! 难度大! 
+
+- Spark中
+
+  - 批处理**:就是普通意义的批处理,可以SparkCore-RDD,或SparkSQL-DataFrame/DataSet**
+  - 流处理:**SparkStreaming微批**,把流划分成一个个的微批然后进行批处理,但微批间隔很小的时候就像是在做流处理, **StructuredStreaming中支持试验性的连续处理**,但默认还是**微批**----所以Spark中的流处理不是真正意义上的流处理,是假的,是微批
+
+- **Flink中  数据流上的有状态计算框架**
+
+  - 流处理:就是真正意义上的流处理（**数据来一条处理一条**）, 从Source接入数据,到Transformation处理数据,到Sink输出数据,整个流程中的各个环节会一直运行,等待上游将数据传递过来进行处理,类似于一直运行的流水线.
+
+  - 注意：
+
+    - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**Flink支持数据来一条处理一条，但是会导致实时性高，但是吞吐量低！ 所以Flink也支持，[缓冲块和超时阈值]()；这样就可以在实时性和吞吐量直接取得平衡。**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**和Spark微批不一样的是,[Flink的DataFlow生成一次](), Spark的微批[DAG每个微批都要生成一次]()!**</span>
+
+- 批处理:Flink中对于数据都看做是流! **实时数据是无界数据流**, **离线数据是有界数据流,** 对于无界数据流用真正意义上的流处理即可, 对于有界数据流当做特殊的流来处理,只不过不需要一直运行,到达数据边界的时候处理完就结束就ok
+
+  ---
+
+  - Flink是真正的流处理, 对于数据处理来说, 都统一的看做是流, 只不过对于无界数据流会一直运行Flink, 对于有界数据流, 计算完数据边界的数据就停止即可
+
+  ``` properties
+  	默认情况下，流中的元素并不会一个一个的在网络中传输，而是缓存起来伺机一起发送(默认为32KB，通过taskmanager.memory.segment-size设置),这样可以避免导致频繁的网络传输,提高吞吐量，但如果数据源输入不够快的话会导致后续的数据处理延迟，所以可以使用env.setBufferTimeout(默认100ms)，来为缓存填入设置一个最大等待时间。等待时间到了之后，即使缓存还未填满，缓存中的数据也会自动发送。 
+  timeoutMillis > 0 表示最长等待 timeoutMillis 时间，就会flush;
+  ```
+
+- **timeoutMillis = 0 表示每条数据都会触发 flush**，直接将数据发送到下游，相当于没有Buffer了(避免设置为0，可能导致性能下降)
+
+- **timeoutMillis = -1 表示只有等到 buffer满了或 CheckPoint的时候，才会flush**。相当于取消了 timeout 策略
+
+-  总结:
+  - [Flink以**缓存块** (**默认为32KB**)为单位进行网络数据传输,用户可以设置**缓存块超时时间(默认100ms)和缓存块大小**来控制缓冲块传输时机,从而控制Flink的延迟性和吞吐量]()
+
+- Flink在底层原理/思想上已经实现了**[流批统一]()**, 并且在[Flink1.12]()的时候在API层面也实现了流批统一,使用DataStream就可以处理流或批,通过一句代码设置即可
+
+- https://ci.apache.org/projects/flink/flink-docs-release-1.12/
+
+  ```java
+  StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+  //env.setRuntimeMode(RuntimeExecutionMode.STREAMING);//指定计算模式为流
+  //env.setRuntimeMode(RuntimeExecutionMode.BATCH);//指定计算模式为批
+  env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);//自动
+  //不设置的话默认是流模式defaultValue(RuntimeExecutionMode.STREAMING)
+  ```
+
+### 8-7-1 Flink如何实现**[低延迟和高吞吐平衡]()**
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**Flink支持数据来一条处理一条，但是会导致实时性高，但是吞吐量低！ 所以Flink也支持，[缓冲块和超时阈值]()；这样就可以在实时性和吞吐量直接取得平衡。**</span>
+- 默认情况下，流中的元素并不会一个一个的在网络中传输，而是缓存起来伺机一起发送(默认为32KB，通过taskmanager.memory.segment-size设置),这样可以避免导致频繁的网络传输,提高吞吐量，但如果数据源输入不够快的话会导致后续的数据处理延迟，所以可以使用env.setBufferTimeout(默认100ms)，来为缓存填入设置一个最大等待时间。等待时间到了之后，即使缓存还未填满，缓存中的数据也会自动发送。 
+  timeoutMillis > 0 表示最长等待 timeoutMillis 时间，就会flush;
+
+- **[timeoutMillis = 0 表示每条数据都会触发 flush]()**，直接将数据发送到下游，相当于没有Buffer了(避免设置为0，可能导致性能下降)
+- **[timeoutMillis = -1 表示只有等到 buffer满了或 CheckPoint的时候，才会flush]()**。相当于取消了 timeout 策略
+
+- 总结:
+  - [Flink以**缓存块** (**默认为32KB**)为单位进行网络数据传输,用户可以设置**缓存块超时时间(默认100ms)和缓存块大小**来控制缓冲块传输时机,从而控制Flink的延迟性和吞吐量]()
+
+
+
+## 8-8 简单介绍一下Flink的Source
+
+- 预定义source:  一般用于学习测试时编造数据时使用
+  - 基于集合
+    - 1.env.[fromElements]()(可变参数);
+    - 2.env.[fromColletion]()(各种集合);
+    - 3.env.[generateSequence]()(开始,结束);
+    - 4.env.[fromSequence]()(开始,结束);
+  - 基于文件
+    - env.[readTextFile]()(本地/HDFS文件/文件夹);//压缩文件也可以
+  - 基于socket
+    - env.[socketTextStream]()("192.168.88.161", 8888);
+
+- 自定义source:
+
+  - [SourceFunction]():非并行数据源(并行度只能=1)
+  - [RichSourceFunction]():多功能非并行数据源(并行度只能=1)	
+  - [ParallelSourceFunction]():并行数据源(并行度能够>=1)
+  - [RichParallelSourceFunction]():多功能并行数据源(并行度能够>=1)--后续学习的Kafka数据源使用的
+  - 例如：自定义MysqlSource 
+
+  ``` java
+  public static class MySQLSource  extends RichParallelSourceFunction<Student>{
+     // 重写 open , run , cancel,close 方法 
+  }
+  ```
+
+- 自定义**[kafkaSource]()** （**[使用最多]()**）
+
+  - [FlinkKafkaConsumer]()
+
+  ``` java
+  DataStream<String> kfkDS = 
+      env.addSource(new FlinkKafkaConsumer<>("flinkTopicRead", new SimpleStringSchema(), properties));
+  
+  ```
+
+  
+
+## 8-9 简单介绍一下Flink 中的Transformation
+
+- 主要分为三大类：
+  - 基础的：map,flatMap,filter,sum,reduce,
+  - 合并拆分：[union, side Outputs]();
+  - 分区：[rebalance]();
+
+- [union]()
+  - 可以合并多个**[同类型]()**的流;
+  - 返回的结果可以[直接打印]()
+
+- [connect]()
+  - 可以连接**[2个不同类型]()**的流；
+  - **最后需要处理后再输出** ， 如： map(new CoMapFunction<xxx,yyy,zzz>(){......})
+
+- [Side Outputs]()-侧道输出
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**分区 [rebalance]() ：可以处理Flink中由于key 导致的数据清洗；**</span>
+
+- 其它分区算子：
+
+  ![1614929242516](file://E:\%E7%AC%94%E8%AE%B0\MyNotes\Notes\%E5%A4%A7%E6%95%B0%E6%8D%AE\09-Flink\images\1614929242516.png?lastModify=1624238431)
+
+## 8-10 简单介绍一下Flink中的Sink
+
+- Sink 使用较多的有：[**kafka,mysql,Hbase,Druid**]()；
+
+- 内置Sink
+
+  - print()
+  - [writeAsText]()
+
+  ``` java
+  ds.writeAsText("data/output/result").setParallelism(1);//输出到文件
+  ds.writeAsText("data/output/result2").setParallelism(2);//输出到文件夹(2个文件)
+  ```
+
+- 自定义Sink
+
+  - [addSink]()(new MySQLSink());
+
+  ``` java
+  private static class MySQLSink extends RichSinkFunction<Student>{
+      // 重写方法 open close run cancel
+  }
+  ```
+
+  - [FlinkKafkaProducer]() ： （**Flink中内部实现了**）
+
+  ``` java
+  resultDS.addSink(new FlinkKafkaProducer<String>(
+      "flinkTopicWrite",
+      new SimpleStringSchema(),
+      properties2
+  ));
+
+
+
+## 8-11 简单介绍一下Flink 中的Connector
+
+- **Jdbc**
+  - [JdbcSink.sink]()
+  - 注意：版本不一样，参数列表都不一样；需要看官网手册；
+
+- **Kafka**
+
+  - **[addSource]()**(new **[FlinkKafkaConsumer]()**<>("flinkTopicRead", new SimpleStringSchema(), properties));
+
+  - resultDS.**[addSink]()**(new **[FlinkKafkaProducer]()**<String>(
+            "flinkTopicWrite",
+            new SimpleStringSchema(),
+            properties2
+    ));
+
+- **Redis**
+
+  - [FlinkJedisPoolConfig]();
+  - [addSink]()(new [RedisSink]()(conf, new [RedisMapper]()(){..}));
+
+  
+
+## 8-12 介绍一下process 和apply的区别？
+
+- process 
+  - 用于[**获取上下文context对象**]()；
+  - 例如：在[**侧道输出**]()的时候需要使用process;
+- apply
+  - 用于**[获取窗口信息]()**；
+  - 一般与**[窗口配合]()**使用；
 

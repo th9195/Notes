@@ -43,7 +43,7 @@
 
 
 - Hbase的特点: 
-  - 1) 强一致性的读写操作
+  - 1) [**强一致性的读写操作**]()
   - 2) 自动分块: region划分
   - 3) 自动的故障转移
   - 4) hbase可以和HDFS进行集成: 本身基于HDFS
@@ -52,14 +52,25 @@
   - 7) 支持Thrift 接口API : 可以通过此API 实现和HUE的集成工作
   - 8) 块缓存和布隆过滤器
   - 9) hbase提供管理界面
+  
+  
 
 
+
+## 2- Hbase数据存储结构
+
+- [**表->region->CF->Hfile**]()
+- 一个HBase 内有多个表；
+- 一个表内有多个region;(一个region是一个文件夹)
+- 一个region 内有多个CF ；（一个CF是一个文件夹）CF 就是一个列族，[**列式存储格式**]()；
+- 一个CF内有多个Hfile文件；
+- 多个Hfile定期会合并为一个Hfile;
 
 # 2-hbase和其他软件的区别
 
 
 
-## 2-1 hbase和RDBMS的区别
+## 2-1 hbase 和 RDBMS的区别
 
 - RDBMS: 以表的方式来存储, 支持SQL 有表关系, 支持join 支持事务 单机存储方案
 
@@ -92,7 +103,7 @@
 
 
 
-## 2-3 hbase和hive的区别
+## 2-3 hbase 和 hive的区别
 
 
 

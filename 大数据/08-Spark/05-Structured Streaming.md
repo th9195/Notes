@@ -2066,13 +2066,17 @@ object IOTStreamingAnalysisDSL {
 
  
 
+
+
+<img src="images/image-20210615135011664.png" alt="image-20210615135011664" style="zoom:150%;" />
+
 ## 7-3 event-time 窗口生成
 
-Structured Streaming中如何依据EventTime事件时间生成窗口的呢？
 
-是由 **首次数据事件时间 和 窗口长度** 确定的
 
-<span style="color:red;background:white;font-size:20px;font-family:楷体;">**起始时间 = 首次数据事件时间 - （首次数据事件时间 % 窗口长度）**</span>
+- Structured Streaming中如何依据EventTime事件时间生成窗口的呢？
+  - 是由 **首次数据事件时间 和 窗口长度** 确定的
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**起始时间 = 首次数据事件时间 - （首次数据事件时间 % 窗口长度）**</span>
 
 例如： 窗口时间 5s, 首次数据事件时间:19:05:03。
 
@@ -2082,7 +2086,7 @@ Structured Streaming中如何依据EventTime事件时间生成窗口的呢？
 
 ​				 = 19:05:00
 
-时间抽就是：
+时间轴就是：
 
 19:05:00 ~ 19:05:05 ~ 19:05:10 ~ 19:05:15 ~ ......
 
@@ -2104,9 +2108,16 @@ Structured Streaming中如何依据EventTime事件时间生成窗口的呢？
 
 
 
+
+
+
+
 ## 7-4 延迟数据处理
 
-​		Structed Streaming与Spark Streaming相比一大特性就是<span style="color:red;background:white;font-size:20px;font-family:楷体;">**支持基于数据中的时间戳的数据处理**</span>。也就是在处理数据时，可以对记录中的eventTime事件时间字段进行考虑。因为eventTime更好的代表数据本身的信息，且可以<span style="color:red;background:white;font-size:20px;font-family:楷体;">**借助eventTime处理比预期晚到达的数据，但是需要有一个限度(阈值)，不能一直等，应该要设定最多等多久。**</span>
+- Structed Streaming与Spark Streaming相比一大特性就是<span style="color:red;background:white;font-size:20px;font-family:楷体;">**支持基于数据中的时间戳的数据处理**</span>。也就是在处理数据时，可以对记录中的eventTime事件时间字段进行考虑。因为eventTime更好的代表数据本身的信息；
+- 可以<span style="color:red;background:white;font-size:20px;font-family:楷体;">**借助eventTime处理比预期晚到达的数据，但是需要有一个限度(阈值)，不能一直等，应该要设定最多等多久。**</span>
+- 如何处理延迟的数据？
+  - 水位线 = max(事件时间) - 允许延迟时间；
 
 
 
@@ -2172,17 +2183,12 @@ lets the engine automatically track the current event time in the data and attem
 ![image-20210420152756123](images/image-20210420152756123.png)
 
 - 总结
-
-``` properties
-complete 模式： 
-	迟到数据也是100% 被计算；   
-
-update 模式： 
-	迟到的数据 100% 被丢弃。 
-	
-
-注意: 这里的迟到数据是指： 允许乱序时间后的数据
-```
+  - complete 模式： 
+    - **水位线不生效；**
+    - **迟到数据也是100% 被计算；**   
+  - update 模式： 
+    	**迟到的数据 100% 被丢弃。** 
+    	
 
 
 
@@ -2515,7 +2521,7 @@ object StructuredDeduplication {
 
 
 
-## 9-6 介绍一下OutputMode 输出模式？
+## 9-6 介绍一下OutputMode 三种输出模式？
 
 - append;
 
@@ -2624,3 +2630,143 @@ Structured Streaming可以使用<span style="color:red;background:white;font-siz
   - **df.selectExpr("CAST(key AS STRING)","CAST(value AS STRING)").as[(String,String)]**
 
   ![image-20210614180119387](images/image-20210614180119387.png)
+
+## 9-13 StructuredStreaming 整合kafka 消费数据时是否需要设置groupID?为什么？
+
+- **不能设置groupID.**
+- 原因：
+  - **系统会自动生成一个唯一的groupID**;
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**那么每次重新程序生成的groupID 是不一样的，那怎么确定上次消费到了哪里？offset**</span>
+  - 首先这里是一个流程处理，是处理实时的数据；一般都是处理的last数据；
+  - 如果重启中间的数据不能丢失，那么可以设置**startingoffsets**: 从那里开始获取数据。
+  - 因为每次消费者获取数据的时候都是**可以获取到offset，partition,topic 等元数据**，所以如果需要保证不丢失数据， 就必须**自己保存好offset**等信息，在二次启动的时候设置startingoffsets。
+
+## 9-14 StructuredStreaming 整合kafka[生产]()数据时是否需要设置topic?为什么？
+
+- 不一定需要使用option来设置topic 
+  - 如果DataFrame中包含了topic字段就不需要额外的在使用option去设置topic;
+
+## 9-15整合kafka总结：
+
+- 消费kafka数据：
+
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**不能设置group id ;**</span>
+  - 不能设置auto.offset.reset;
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**不能设置key/value.deserializer/serializer;**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**不能设置enable.auto.commit;**</span>
+  - 不能设置interceptor.classes;
+
+  
+
+- 生成kafka数据：
+
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**DataFrame中必须有value 字段；**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**DataFrame中可选择有key, topic 字段；**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**option设置中必须有kafka.bootstrap.servers；**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**option设置中课选择有topic；**</span>
+
+## 9-16 常用方法汇总
+
+-  获取**value**字段的值，转换为**String**类型；(因为获取kafka中的数据时二进制格式)
+
+  - selectExpr("CAST(value AS STRING)")
+
+- 将数据转换**Dataset**  : 原数据抽象是：DataFrame , 泛型是Row,不好处理；
+
+  - as[String] 
+
+- 过滤一些为异常数据
+
+  - **StringUtils**.*isNotBlank*(_)
+
+- **获取json中的数据转换成列**；
+
+  - ``` scala
+    .select(
+        get_json_object($"value", "$.device").as("device_id"),
+        get_json_object($"value", "$.deviceType").as("device_type"),
+        get_json_object($"value", "$.signal").cast(DoubleType).as("signal"),
+        get_json_object($"value", "$.time").cast(LongType).as("time")
+    )
+    ```
+
+- **直接将Json字符串转成Bean**；
+
+  - ``` scala
+    .map(data => {
+        // json 转 bean
+        JSON.parseObject(data, classOf[DeviceData])
+    })
+    ```
+
+- **聚合**算子使用
+
+  - ``` scala
+    // 统计数量、评价信号强度
+    .agg(
+        count($"device_type").as("count_device"),
+        round(avg($"signal"), 2).as("avg_signal")
+    )
+    ```
+
+## 9-17 时间概念
+
+- **事件时间**
+
+```properties
+	产生数据的时间， 一般数据都会带上自己产生的时间（其实就是产生这个数据的服务器时间）
+```
+
+- 注入时间
+
+```properties
+	进入我们spark程序的时间（source阶段）。（开发中100% 不会使用到）
+```
+
+- **处理时间**
+
+```properties
+	正在进入spark程序的时间（process阶段），一般我们说的处理时间就是数据进入spark的时间（一般不考虑注入时间）
+```
+
+- **计算时间**
+
+```properties
+	当水位线到了窗口的末尾触发了计算，这个时间就是计算时间。
+```
+
+
+
+## 9-18 事件时间
+
+- 重点
+
+  - 一旦**按照事件时间来做流或者窗口计算**，那么 <span style="color:red;background:white;font-size:20px;font-family:楷体;">**所有和时间相关的内容统统以数据自带的时间（事件时间）为准**</span>， 和<span style="color:red;background:white;font-size:20px;font-family:楷体;">**服务器的系统时间没有任何关系**</span>；
+  - **如果要使用事件时间，就必须使用waterMark水位线；**
+
+  
+
+## 9-19 介绍一下水位线
+
+- 按照事件时间来处理数据时， **水位线也是有数据的事件时间来控制的**；
+  - **水位线 = max(事件时间)；**
+- **水位线只会前进，不会后退**：也就说延迟数据中的事件时间如果小于当前的水位线，水位线是不会动的；
+- **数据时包头不包尾的；**
+- 当水位线>= 窗口endTime 就触发当前窗口的计算；
+
+
+
+## 9-20 事件时间计算，会导致迟到的数据被丢弃，如何解决？
+
+- 当第一条数据进来后才会有水位线和窗口规划；
+  - 窗口的起始时间： 
+    - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**起始时间 = 首次数据事件时间 - （首次数据事件时间 % 窗口长度）**</span>
+  - 如何处理延迟的数据？**就是延迟去计算窗口；**
+    - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**水位线 = max(事件时间) - 允许延迟时间；**</span>
+
+- 水位线跟输出模式配合；
+  - complete 模式： 
+    - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**水位线不生效；**</span>
+    - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**迟到数据也是100% 被计算； **</span>  
+  - update 模式： 
+    - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**迟到的数据 100% 被丢弃；**</span>

@@ -1684,7 +1684,7 @@ object SparkCkptTest {
     - Cache和Persist的RDD会在**程序结束后会被清除或者手动调用unpersist方法**；
     - Checkpoint的RDD在程序结束后依然存在，**不会被删除**；
 
-  -  3）、**Lineage(血统、依赖链、依赖关系)**
+  -  3）、**[Lineage]()(血统、依赖链、依赖关系)**
 
     - Persist和Cache，**不会丢掉RDD间的依赖链/依赖关系**，因为这种缓存是不可靠的，如果出现了一些错误(例如 Executor 宕机)，需要通过回溯依赖链重新计算出来；
     - **Checkpoint会斩断依赖链**，因为Checkpoint会把结果保存在HDFS这类存储中，更加的安全可靠，一般不需要回溯依赖链；
@@ -3382,3 +3382,56 @@ Spark的Shuffle分为**Write和Read两个阶段，分属于两个不同的Stage*
 
 ![image-20210515113510872](images/image-20210515113510872.png)
 
+## 9-13 介绍一下Spark中的共享变量
+
+### 9-13-1 广播变量
+
+- 原因：
+  - rdd1(大) join rdd2(小)；
+  - **让一个Executor中的所有task 共用一个公有的数据rdd2；**
+
+- 使用方法：
+  - **发布广播变量**：val listBroadcast: Broadcast[List[String]] = **sc.broadcast(list)**
+  - **获取广播变量**： val listValue = **listBroadcast.value**
+
+- 原理：
+
+​		[**广播变量只在每个节点（Worker or Executor）缓存一份只读变量，共这个节点下的所有Task使用。**]()
+
+### 9-13-2 累加器
+
+- 原理：
+
+  - **用于[多个节点对一个变量]()进行共享性的操作**;
+
+- 特性：
+
+  - **多个task对一个变量并行操作的功能；**
+  - **task只能对Accumulator进行累加操作，不能读取Accumulator的值；**
+  - **只有Driver程序可以读取Accumulator的值**；
+  - [**累加器存在于Driver端；**]()
+
+- 种类：
+
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**LongAccumulator用来累加整数型，**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**DoubleAccumulator用来累加浮点型，**</span>
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**CollectionAccumulator用来累加集合元素。**</span>
+
+- 使用方法：
+
+  - **定义累加器**：val accumulator: LongAccumulator = **sc.longAccumulator("mycounter")**
+  - **累加计算**：accumulator.**add**(1L)；
+  - **获取累加值**：accumulator.**value**；
+
+- 扩展：
+
+  - **自定义累加器**
+
+    - **第一步、继承AccumulatorV2，实现相关方法；**
+    - **第二步、创建自定义Accumulator的实例，然后在SparkContext上注册它；**
+
+    ![image-20210607153024404](images/image-20210607153024404.png)
+
+- 注意：
+
+  - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**累加器在Driver中；**</span>

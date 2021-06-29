@@ -236,19 +236,25 @@
 
 ## 2-3 State存储介质/状态存储后端
 
-### 2-3-1 MemoryStateBackend-开发不用
+### 2-3-1 MemoryStateBackend
+
+- **[开发不用]()**
 
 ![1615168191477](images/1615168191477.png)
 
 
 
-### 2-3-2 FSStateBackend-开发使用-一般情况下使用
+### 2-3-2 FSStateBackend
+
+- [**开发使用-一般情况下使用**]()
 
 ![1615168298682](images/1615168298682.png)
 
 
 
-### 2-3-3 RocksStateBackend-开发使用-超大状态使用
+### 2-3-3 RocksStateBackend
+
+- [**开发使用-超大状态使用**]()
 
 ![1615168611976](images/1615168611976.png)
 
@@ -461,7 +467,7 @@ if (SystemUtils.IS_OS_WINDOWS) {
 
 ### 2-5-2 建议设置 4个
 
-- 设置两个Checkpoint 之间最少等待时间
+- 设置两个[**Checkpoint 之间最少等待时间**]()
 
 ``` java
 //设置两个Checkpoint 之间最少等待时间,如设置Checkpoint之间最少是要等 500ms(为了避免每隔1000ms做一次Checkpoint的时候,前一次太慢和后一次重叠到一起去了)
@@ -472,7 +478,7 @@ env.getCheckpointConfig().setMinPauseBetweenCheckpoints(500);//默认是0
 
 
 
-- 设置如果在做Checkpoint过程中出现错误 是否让整体任务失败
+- 设置如果在做Checkpoint过程中出现错误 是否让[**整体任务失败**]()
 
 ``` java
 //设置如果在做Checkpoint过程中出现错误，是否让整体任务失败：true是  false不是
@@ -481,7 +487,7 @@ env.getCheckpointConfig().setFailOnCheckpointingErrors(false);//默认是true
 
 
 
-- 设置容忍多少次Checkpoint任务失败
+- 设置容忍[**多少次Checkpoint任务失败**]()
 
 ``` java
 // 设置容忍多少次任务失败。
@@ -490,7 +496,7 @@ env.getCheckpointConfig().setTolerableCheckpointFailureNumber(10);//默认值为
 
 
 
-- 设置是否清理检查点
+- 设置是否[**清理检查点**]()
 
 ``` java
 //设置是否清理检查点,表示 Cancel 时是否需要保留当前的 Checkpoint，默认 Checkpoint会在作业被Cancel时被删除
@@ -506,7 +512,7 @@ env.getCheckpointConfig().setTolerableCheckpointFailureNumber(10);//默认值为
 
 ### 2-5-3 使用默认 3个
 
-- 设置checkpoint的执行模式为EXACTLY_ONCE(默认)
+- 设置checkpoint的执行模式为[**EXACTLY_ONCE**]()(默认)
 
 ``` java
 //设置checkpoint的执行模式为EXACTLY_ONCE(默认)
@@ -515,7 +521,7 @@ env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
 
 
 
-- 设置checkpoint的超时时间,如果 Checkpoint在 60s内尚未完成说明该次Checkpoint失败,则丢弃。
+- 设置checkpoint的[**超时时间**](),如果 Checkpoint在 60s内尚未完成说明该次Checkpoint失败,则丢弃。
 
 ``` java
 //设置checkpoint的超时时间,如果 Checkpoint在 60s内尚未完成说明该次Checkpoint失败,则丢弃。
@@ -524,7 +530,7 @@ env.getCheckpointConfig().setCheckpointTimeout(60000);//默认10分钟
 
 
 
-- 设置同一时间有多少个checkpoint可以同时执行
+- 设置同一时间有多少个checkpoint可以[**同时执行**]()
 
 ``` java
 //设置同一时间有多少个checkpoint可以同时执行
@@ -961,7 +967,7 @@ nc -lk 9999
   - **-s + savePoint path**;
 
 ``` properties
-/export/server/flink-1.12.0/bin/flink run -s hdfs://node1:8020/flink-savepoint/savepoint-14606c-3d8d42cebb93 --class cn.itcast.checkpoint.CheckpointDemo02 /root/ckp.jar 
+/export/server/flink-1.12.0/bin/flink run -s hdfs://node1:8020/flink-savepoint/savepoint-14606c-3d8d42cebb93 --class com.fiberhome.flink.checkpoint.Demo01_Checkpoint01 /root/ckp.jar 
 
 ```
 
@@ -985,32 +991,96 @@ yarn application -kill application_1614825325070_0005
 
 
 
+# 4- 总结-面试题
 
-
-# 4- 总结
-
-## 4-1 总结State和Checkpoint
+## 4-1 对比State和Checkpoint
 
 (如作用.区别.原理...)
 
-| 名称              | 作用                                | 区别                 | 原理                                                         |
-| ----------------- | ----------------------------------- | -------------------- | ------------------------------------------------------------ |
-| State 状态        | 保存有状态计算的**历史数据**        | 保存在**内存**中     | 保存Flink中某一个Operator在某个时刻的状态。                  |
-| Checkpoint 检查点 | 将某个时刻的**State快照**（持久化） | 一般保存在**磁盘**中 | 将程序中所有有状态的operator 在某个时刻的State 持久化到磁盘中， 方便程序异常时状态恢复。 |
-|                   |                                     |                      | **Checkpoint就是State的快照**                                |
+| 名称              | 作用                                                    | 区别                     | 原理                                                         |
+| ----------------- | ------------------------------------------------------- | ------------------------ | ------------------------------------------------------------ |
+| State 状态        | 保存**[某一个operator]()**有状态计算的**历史数据**      | 保存在**[内存]()**中     | 保存Flink中某一个Operator在某个时刻的状态。                  |
+| Checkpoint 检查点 | 将某个时刻**[所有operato]()**r的**State快照**（持久化） | 一般保存在**[磁盘]()**中 | 将程序中所有有状态的operator 在某个时刻的State 持久化到磁盘中， 方便程序异常时状态恢复。 |
+|                   |                                                         |                          | **Checkpoint就是多个State的快照**                            |
 
 
 
-## 4-2 总结Flink如何容错
+## 4-2 Checkpoint的流程
+
+![1615167156691](images/1615167156691.png)
+
+1.**JobManager**创建CheckpointCoordinator**[检查点协调器]()**并根据用户设置的时间间隔,向Operator发送检查点信号**[Barrier栅栏]()**
+
+2.SourceOperator接收到检查点信号Barrier栅栏,就[**暂停**手里的活](),然后将当前Operator的State状态**[做一份快照]()**(一般是存到HDFS上),ok之后向检查点协调器**[汇报成功](),** 并将Barrier栅栏发送给**[下一个Operator]()**
+
+3.下一个TransformationOperator接收到Barrier之后,同样的也**暂停**工作,将当前Operator的State**做快照**存储(一般是存到HDFS上),ok之后向检查点协调器**汇报成功**, 并将Barrier栅栏发送给**下一个Operator**
+
+4.直到[**SinkOperator**也完成上述快照操作](), CheckpointCoordinator**[检查点协调器接收到所有的Operator汇报达到成功]()**信息,则认为该次**[Checkpoint成功]()**! （失败可以重发Barrier栅栏， 或认为任务失败）
+
+
+
+- 注意:
+  -  **数据存储到外部介质**中(一般是HDFS)是使用的**异步**操作
+  -  分布式快照执行时的数据一致性由**[Chandy-Lamport algorithm]()**分布式快照算法保证! 
+
+
+
+
+
+## 4-3 State存储介质/状态存储后端
+
+### 2-3-1 MemoryStateBackend
+
+- **[开发不用]()**
+
+![1615168191477](images/1615168191477.png)
+
+
+
+### 2-3-2 FSStateBackend
+
+- [**开发使用-一般情况下使用**]()
+
+![1615168298682](images/1615168298682.png)
+
+
+
+### 2-3-3 RocksStateBackend
+
+- [**开发偶尔使用-超大状态使用**]()
+
+![1615168611976](images/1615168611976.png)
+
+
+
+## 4-4 Flink的重启策略
+
+- 默认重启策略（无限重启）
+  - [**配置了Checkpoint,而没有配置重启策略**]()
+- 无重启策略（不重启）
+  - RestartStrategies.**[noRestart]()**()
+- **[固定延迟重启策略]()**（允许重启N次）
+  - RestartStrategies.[**fixedDelayRestart**]()(3,  Time.of(10, TimeUnit.SECONDS) )
+
+- [**失败率重启策略**]()（允许**重启频率**）
+  - RestartStrategies.**[failureRateRestart]()**(
+    	3, // 每个测量时间间隔最大失败次数
+    	Time.of(5, TimeUnit.MINUTES), // 失败率测量的时间间隔 ([**5分钟内部允许重启3次**]())
+    	Time.of(10, TimeUnit.SECONDS) // 两次连续[**重启的时间间隔**]()
+    )
+
+
+
+## 4-5 总结Flink如何容错
 
 **State + Checkpoint(Savepoint) + RestartStrategies**
 
 - 注意： Spark如何容错？
-  - **checkpoin t和 wal预写日志**
+  - **checkpoint和 wal预写日志**
 
 
 
-## 4-3 Flink VS Spark
+## 4-6 Flink VS Spark
 
 
 
@@ -1018,7 +1088,7 @@ yarn application -kill application_1614825325070_0005
 | ---------------- | ------------------------------------------------------------ | ---------------------------------------- | --------------------------------- |
 | 状态State        | 默认有状态计算<br>ManageState+RawState<br>KeyedState+OperatorState | updateStateByKey <br>mapWithState        | 默认有状态计算                    |
 | 检查点Checkpoint | env.enableCheckpointing<br>env.setStateBackend<br>    MemoryStateBackend<br>    FSStateBackend<br>    RocksStateBackend<br> | ssc.checkpoint(path)<br>updateStateByKey | option("checkpointLocation",path) |
-| 重启策略Restart  | RestartStrategies.noRestart()<br>xxx.fixedDelayRestart<br>xxx.failureRateRestart | ssc.checkpoint(path)<br>updateStateByKey | option("checkpointLocation",path) |
+| 重启策略Restart  | RestartStrategies.noRestart()<br>xxx.[**fixedDelayRestart**]()<br>xxx.failureRateRestart | ssc.checkpoint(path)<br>updateStateByKey | option("checkpointLocation",path) |
 |                  |                                                              |                                          |                                   |
 
 
