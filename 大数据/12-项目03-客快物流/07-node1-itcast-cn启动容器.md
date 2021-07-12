@@ -59,7 +59,7 @@
    sqlplus "/as sysdba"
    startup
    # 测试连接是否可以
-   conn itcast/itcast;
+   conn itcast/itcast
    ```
 
    

@@ -52,7 +52,7 @@ chown -R mysql:mysql /export/server/mysql-5.7.29/
 
 - 5、配置mysql服务
 
-``` sql
+``` shell
 cp /export/server/mysql-5.7.29/support-files/mysql.server /etc/init.d/mysql
 ```
 

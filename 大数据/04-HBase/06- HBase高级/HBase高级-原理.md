@@ -52,8 +52,8 @@
 3. Client 连接meta表所在的regionServer，从meta中获取要写入数据的表在哪个region中，并将对应的regionServer地址返回给客户端；
 4. 连接对应region 的regionServer地址，并开始进行数据写入；
 5. 写入顺序:
-   - 首先将数据写入到这个regionServer的Hlog日志中；
-   - 然后再将数据写入region中store模块的memStore中；
+   - 首先将数据写入到这个regionServer的**[Hlog]()**日志中；
+   - 然后再将数据写入region中store模块的**[memStore]()**中；
    - Client写入工作完成；
 
 

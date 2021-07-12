@@ -50,6 +50,7 @@ netstat -nltp
 
 ``` shell
 netstat -anp | grep 10000
+netstat -anp | grep 9000 # clickhouse 端口
 ```
 
 

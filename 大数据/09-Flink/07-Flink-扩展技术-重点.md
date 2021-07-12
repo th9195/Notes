@@ -1805,7 +1805,64 @@ stream.apply(new WindowFunction<WikipediaEditEvent, Tuple2<String, Long>, String
 
 
 
-### 7-9-9 其他的
+### 7-9-9有向无环图
+
+- Spark: **[DAG]()**  
+  - 有[driver]()生成；
+  - [**每一批数据生成一次DAG**]()；
+- Flink: [**StreamingDataFlow**]()
+  - **由client端生成；**
+  - **只需要生成一次；**
+
+
+
+### 7-9-10 其他的
 
 Flink的高级功能 : [Flink CEP可以实现 实时风控]() .....
+
+
+
+## 7-10 Flink如何实现**[  低延迟  和  高吞吐  平衡]()**
+
+- <span style="color:red;background:white;font-size:20px;font-family:楷体;">**Flink支持数据来一条处理一条，但是会导致 [实时性高]()，但是 [吞吐量低]()！ 所以Flink也支持，[缓冲块和超时阈值]()；这样就可以在实时性和吞吐量直接取得[平衡]()。**</span>
+- 默认情况下，流中的元素并不会一个一个的在网络中传输，而是缓存起来伺机一起发送(默认为32KB，通过taskmanager.memory.segment-size设置),这样可以避免导致频繁的网络传输,提高吞吐量，但如果数据源输入不够快的话会导致后续的数据处理延迟，所以可以使用env.setBufferTimeout(默认100ms)，来为缓存填入设置一个最大等待时间。等待时间到了之后，即使缓存还未填满，缓存中的数据也会自动发送。 
+  timeoutMillis > 0 表示最长等待 timeoutMillis 时间，就会flush;
+
+- **[timeoutMillis = 0 表示每条数据都会触发 flush]()**，直接将数据发送到下游，相当于没有Buffer了(避免设置为0，可能导致性能下降)
+- **[timeoutMillis = -1 表示只有等到 buffer满了或 CheckPoint的时候，才会flush]()**。相当于取消了 timeout 策略
+
+- 总结:
+  - [Flink以**缓存块** (**默认为32KB**)为单位进行网络数据传输,用户可以设置**缓存块超时时间(默认100ms)和缓存块大小**来控制缓冲块传输时机,从而控制Flink的延迟性和吞吐量
+
+
+
+## 7-11 Spark VS Flink 反压/背压
+
+## 背压/反压
+
+[back pressure]()
+
+- Spark: 
+  - Spark消费kafka的数据是**[主动从kafka拉取]()**的；
+  - **PIDRateEsimator** ,**[PID算法]()**实现一个[**速率评估器**]()(统计 **DAG调度时间 , 任务处理时间 , 数据条数** 等, 得出一个消息处理**最大速率,** 进而调整根据offset从kafka消费消息的速率), 
+
+- Flink: 
+  - 基于credit – based 流控机制，在应用层模拟 TCP 的流控机制；
+  - 上游发送数据给下游之前会先进行通信,告诉下游要发送的[blockSize](),；
+  - 下游就可以准备相应的buffer来接收, 如果准备ok则返回一个[credit凭证]()；
+  - 上游收到凭证就发送数据, 如果没有准备ok,则[不返回credit](),上游等待下一次通信返回credit；
+
+![1611309932060](images/1611309932060.png)
+
+[**Ratio:表示有多大的概率不会返回credit;**]()
+
+阻塞占比在 web 上划分了三个等级：
+
+OK: 0 <= Ratio <= 0.10，表示状态良好；
+
+LOW: 0.10 < Ratio <= 0.5，表示有待观察；
+
+HIGH: 0.5 < Ratio <= 1，表示要处理了[**(增加并行度/subTask/检查是否有数据倾斜/增加内存...**]())。
+
+例如，0.01，代表着100次中有一次阻塞在内部调用
 

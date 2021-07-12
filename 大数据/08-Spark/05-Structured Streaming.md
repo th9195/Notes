@@ -1068,7 +1068,7 @@ object Demo08_FileSInk {
 
 #### 4-5-3-1 Foreach
 
-​		Structured Streaming提供接口foreach和foreachBatch，允许用户在流式查询的输出上应用任意操作和编写逻辑，比如输出到MySQL表、Redis数据库等外部存系统。其中foreach允许每行自定义写入逻辑，foreachBatch允许在每个微批量的输出上进行任意操作和自定义逻辑，建议使用foreachBatch操作。
+​		Structured Streaming提供接口foreach和foreachBatch （[**流转批**]()），允许用户在流式查询的输出上应用任意操作和编写逻辑，比如输出到MySQL表、Redis数据库等外部存系统。其中foreach允许每行自定义写入逻辑，foreachBatch允许在每个微批量的输出上进行任意操作和自定义逻辑，建议使用foreachBatch操作。
 
 ​		foreach表达自定义编写器逻辑具体来说，需要编写类class继承ForeachWriter，其中包含三个方法来表达数据写入逻辑：打开，处理和关闭。
 
@@ -1095,7 +1095,7 @@ streamingDatasetOfString.writeStream.foreach(
 
 
 
-#### 4-5-3-2 ForeachBatch
+#### 4-5-3-2 ForeachBatch 流转批
 
 ​		方法foreachBatch允许指定在流式查询的**每个微批次**的输出数据上执行的函数，需要两个参数：微批次的输出数据DataFrame或Dataset、微批次的唯一ID。
 
@@ -2770,3 +2770,4 @@ Structured Streaming可以使用<span style="color:red;background:white;font-siz
     - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**迟到数据也是100% 被计算； **</span>  
   - update 模式： 
     - <span style="color:red;background:white;font-size:20px;font-family:楷体;">**迟到的数据 100% 被丢弃；**</span>
+

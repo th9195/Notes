@@ -6,7 +6,7 @@
   - 支持亚秒级数据查询；
   - 支持OLAP分析；
   - 支持SQL数据库查询,性能高效；
-  - 不支持复杂查询（join）；
+  - 不支持复杂查询（join）,不支持DDL  , 不支持DML；
 
 - 特点
   - 需要摄取数据，摄取数据的格式是json
@@ -56,9 +56,9 @@
     - 每个segment包含三部分：**1-时间列；2-指标列；3-维度列**；
 
 ``` properties
-1.Druid中的数据存储在被称为DataSource中，DataSource类似RDMS中的table
+1.Druid中的数据存储在被称为 DataSource 中，DataSource 类似 RDMS中的table
 
-2.每个DataSource按照时间划分，每个时间范围称为一个chunk（(比如按天分区，则一个chunk为一天)）。
+2.每个DataSource按照时间划分，每个时间范围称为一个 chunk（(比如按天分区，则一个chunk为一天)）。
 
 3.在chunk中数据被分为一个或多个segment；
 
@@ -88,6 +88,25 @@ segment是按照时间组织成的chunk，所以在按照时间查询数据时�
     - bitMap： 就是坐标；
 
 <img src="images/image-20210202150430190.png" alt="image-20210202150430190" style="zoom:150%;" />
+
+
+
+## Apache Druid角色分配
+
+- **索引组件：管理摄取进程，创建/管理segment，创建/管理dataSource**
+  - **overload（主节点）**
+  - **middlemanager（从节点）**
+- **存储组件:负责数据的存储和数据的删除**
+  - **coordinator（主节点）:**
+  - **historical（从节点）:**
+- **查询组件: 接收查询请求，将结果数据返回给客户端**
+  - **router（主节点）**
+  - **broker（从节点）**
+- **dataSource(table)**
+- **chunk (每个时间范围):  一个chunck下有过个segment**
+- **segment(实际存储数据的文件): 每个segment包含三部分：1-时间列；2-指标列；3-维度列；**
+
+
 
 
 
@@ -179,7 +198,7 @@ http://node01:8090/druid/indexer/v1/task
 
  
 
-# Druid数据摄取
+# Druid数据摄取  
 
 Druid支持流式和批量两种方式的数据摄入，针对不同类型的数据，Druid将外部数据源分为两种形式：
 
@@ -936,7 +955,7 @@ UNION ALL操作符表示将多个SELECT语句放在一起（并集），每个SE
 
 ### Druid SQL不支持的功能：
 
-- JOIN语句和DDL/DML语句
+- [**JOIN语句和DDL/DML语句**]()
 
 
 
@@ -980,19 +999,12 @@ Druid提供了JDBC接口，JavaWeb项目可以直接使用 JDBC 连接Druid进�
 
 实现步骤：
 
- 
-
+``` properties
 1、创建 druid_jdbc Maven模块
-
- 
 
 2、导入依赖
 
- 
-
 3、编写JDBC代码连接Druid获取数据
-
- 
 
 3.1.加载Druid JDBC驱动
 
@@ -1003,6 +1015,9 @@ Druid提供了JDBC接口，JavaWeb项目可以直接使用 JDBC 连接Druid进�
 3.4.构建Statement，执行SQL获取结果集
 
 3.5关闭Druid连接
+```
+
+
 
 具体实现：
 
